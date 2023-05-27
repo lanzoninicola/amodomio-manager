@@ -1,0 +1,25 @@
+{
+  "name": "firestore-model",
+  "version": "1.0.0",
+  "description": "Tiny library to help you use Firestore with your models.",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lanzoninicola/firestore-model.git"
+  },
+  "keywords": [
+    "firestore"
+  ],
+  "author": "Lanzoni Nicola",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lanzoninicola/firestore-model/issues"
+  },
+  "homepage": "https://github.com/lanzoninicola/firestore-model#readme"
+}

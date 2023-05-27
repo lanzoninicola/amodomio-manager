@@ -1,0 +1,9 @@
+.DS_Store
+node_modules
+
+/.cache
+/build
+/public/build
+.env
+
+/app/lib/firestore-model/src/lib/config/*.json
