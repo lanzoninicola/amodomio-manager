@@ -134,7 +134,7 @@ function IngredientList({ ingredients, prices }: { ingredients: Ingredient[], pr
                             </Button>
                         </div>
                     </Form>
-                    <IngredientPriceForm id={ingredient.id} priceRecord={prices.find(p => p.ingredientId === ingredient.id)} />
+                    {showPriceForm && <IngredientPriceForm id={ingredient.id} />}
                     <Separator />
                 </li>
             ))}
@@ -142,7 +142,11 @@ function IngredientList({ ingredients, prices }: { ingredients: Ingredient[], pr
     )
 }
 
-function IngredientPriceForm({ id, priceRecord }: { id: string | undefined, priceRecord?: IngredientPrice }) {
+function IngredientPriceForm({ id }: { id: string | undefined }) {
+    const loaderData: LoaderData = useLoaderData<typeof loader>()
+    const ingredientPrices = loaderData.prices.find(p => p.ingredientId === id)
+    const ingredient = loaderData.ingredients.find(i => i.id === id)
+
 
     return <Form method="post">
         <Fieldset>
