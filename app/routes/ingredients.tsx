@@ -1,6 +1,6 @@
 import type { ActionArgs, LoaderArgs, V2_MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
+import { Form, useActionData, useLoaderData } from "@remix-run/react";
 import { MoreHorizontal, Trash2 } from "lucide-react";
 import React from "react";
 import Container from "~/components/layout/container/container";
@@ -18,7 +18,6 @@ import {
     SelectContent,
     SelectGroup,
     SelectItem,
-    SelectLabel,
     SelectTrigger,
     SelectValue,
 } from "~/components/ui/select"
@@ -50,31 +49,53 @@ export async function action({ request }: ActionArgs) {
 
     console.log({ _action, values })
 
-    try {
-        if (_action === "create-ingredient") {
+    if (_action === "create-ingredient") {
+        try {
             await IngredientModel.add({ name: values.name })
             return json(values.name)
+        } catch (error) {
+            return json({ action: "create-ingredient", error: error?.message })
         }
-
-        if (_action === "ingredient-delete") {
-            const foo = await IngredientModel.delete(values.id as string)
-            return json({ success: true })
-        }
-
-        if (_action === "ingredient-add-price") {
-            // await IngredientModel.addPrice({ id: values.id, price: 1.99 })
-            return json({ success: true })
-        }
-
-    } catch (error) {
-        return json({ error })
     }
+
+    if (_action === "ingredient-delete") {
+        try {
+            await IngredientModel.delete(values.id as string)
+            return json({ success: true })
+        } catch (error) {
+            return json({ action: "create-ingredient", error: error?.message })
+        }
+
+    }
+
+    if (_action === "ingredient-add-price") {
+
+        try {
+            await IngredientPriceModel.add({
+                ingredientId: values.ingredientId,
+                supplierId: values.supplierId,
+                unit: values.unit,
+                quantity: values.quantity,
+                price: values.price,
+            })
+            return json({ success: true })
+
+        } catch (error) {
+            return json({ action: "ingredient-add-price", error: error?.message })
+        }
+
+    }
+
+    return null
 }
 
 
 
 export default function Index() {
-    const loaderData: LoaderData = useLoaderData<typeof loader>()
+
+    const responseData = useActionData<typeof action>();
+
+    console.log({ responseData })
 
     return (
         <Container>
@@ -100,10 +121,8 @@ export default function Index() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-6">
-                    {loaderData?.ingredients.length === 0 && (
-                        <span>Nenhum ingrediente cadastrado</span>
-                    )}
-                    <IngredientList ingredients={loaderData.ingredients} prices={loaderData.prices} />
+
+                    <IngredientList />
                 </CardContent>
             </Card>
 
@@ -112,15 +131,18 @@ export default function Index() {
 }
 
 
-function IngredientList({ ingredients, prices }: { ingredients: Ingredient[], prices: IngredientPrice[] }) {
+function IngredientList() {
+    const loaderData: LoaderData = useLoaderData<typeof loader>()
     // Pressing "MoreHorizontal" button should be handled via SSR and not client-side
     const [showPriceForm, setShowPriceForm] = React.useState(true)
 
+    if (!loaderData.ingredients || loaderData.ingredients.length === 0) return null
+
     return (
         <ul>
-            {ingredients.map(ingredient => (
+            {loaderData.ingredients.map(ingredient => (
                 <li key={ingredient.id} className="mb-4">
-                    <Form method="delete" className="grid grid-cols-2 justify-between items-center" >
+                    <Form method="delete" className="grid grid-cols-2 justify-between items-center mb-2" >
                         <div>
                             <Input type="hidden" name="id" value={ingredient.id} />
                             <p>{ingredient.name}</p>
@@ -146,28 +168,49 @@ function IngredientPriceForm({ id }: { id: string | undefined }) {
     const loaderData: LoaderData = useLoaderData<typeof loader>()
     const ingredientPrices = loaderData.prices.find(p => p.ingredientId === id)
     const ingredient = loaderData.ingredients.find(i => i.id === id)
+    const suppliers = loaderData.suppliers
 
 
-    return <Form method="post">
-        <Fieldset>
-            <Label htmlFor="ingredients-name">Nome</Label>
-            <Select>
-                <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select a fruit" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectGroup>
-                        <SelectLabel>Fruits</SelectLabel>
-                        <SelectItem value="apple">Apple</SelectItem>
-                        <SelectItem value="banana">Banana</SelectItem>
-                        <SelectItem value="blueberry">Blueberry</SelectItem>
-                        <SelectItem value="grapes">Grapes</SelectItem>
-                        <SelectItem value="pineapple">Pineapple</SelectItem>
-                    </SelectGroup>
-                </SelectContent>
-            </Select>
-        </Fieldset>
-
-
-    </Form >
+    return (
+        <Form method="post" className="mb-4">
+            <Input type="hidden" name="ingredientId" value={ingredient?.id} />
+            <div className="flex flex-col md:flex-row md:gap-4">
+                <Fieldset>
+                    <Select name="supplierId" >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Forneçedor" className="text-xs" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                {suppliers.map(supplier => (
+                                    <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>
+                                ))}
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                </Fieldset>
+                <div className="flex gap-4">
+                    <Fieldset>
+                        <Select name="unit">
+                            <SelectTrigger>
+                                <SelectValue placeholder="Unidade" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup >
+                                    <SelectItem value="gr">GR</SelectItem>
+                                    <SelectItem value="un">UN</SelectItem>
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+                    </Fieldset>
+                    <Fieldset>
+                        <Input type="number" id="ingredient-quantity" placeholder="Quantitade" name="quantity" className="md:w-[100px]" />
+                    </Fieldset>
+                    <Fieldset>
+                        <Input type="number" id="ingredient-price" placeholder="Preço" name="prices" className="md:w-[100px]" />
+                    </Fieldset>
+                </div>
+            </div>
+            <Button type="submit" name="_action" value="ingredient-add-price" className="w-full">Salvar</Button>
+        </Form >)
 }
