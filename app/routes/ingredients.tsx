@@ -21,6 +21,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from "~/components/ui/select"
+import { badRequest } from "~/lib/api-errors";
+import errorMessage from "~/lib/error-message";
+import { ok } from "~/lib/api-response";
 
 export const meta: V2_MetaFunction = () => {
     return [
@@ -61,9 +64,9 @@ export async function action({ request }: ActionArgs) {
     if (_action === "ingredient-delete") {
         try {
             await IngredientModel.delete(values.id as string)
-            return json({ success: true })
+            return ok()
         } catch (error) {
-            return json({ action: "create-ingredient", error: error?.message })
+            return badRequest({ action: "create-ingredient", message: errorMessage(error) })
         }
 
     }
@@ -78,10 +81,11 @@ export async function action({ request }: ActionArgs) {
                 quantity: values.quantity,
                 price: values.price,
             })
-            return json({ success: true })
+
+            return ok()
 
         } catch (error) {
-            return json({ action: "ingredient-add-price", error: error?.message })
+            return badRequest({ action: "ingredient-add-price", message: errorMessage(error) })
         }
 
     }
