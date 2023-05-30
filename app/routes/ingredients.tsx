@@ -1,6 +1,6 @@
-import type { ActionArgs, LoaderArgs, V2_MetaFunction } from "@remix-run/node";
+import type { ActionArgs, V2_MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { Form, useActionData, useLoaderData, useNavigation, useTransition } from "@remix-run/react";
+import { Form, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
 import { MoreHorizontal, Trash2 } from "lucide-react";
 import React from "react";
 import Container from "~/components/layout/container/container";
@@ -111,6 +111,20 @@ export async function action({ request }: ActionArgs) {
         return ok()
     }
 
+    if (_action === "ingredient-delete-price") {
+        if (!values.ingredientPriceId) {
+            return badRequest({ action: "ingredient-update-price", message: "Não foi possivel identificar o registro da apagar" })
+        }
+
+        const [err, data] = await tryit(IngredientPriceModel.delete(values.ingredientPriceId as string)
+
+        if (err) {
+            return badRequest({ action: "ingredient-delete-price", message: errorMessage(err) })
+        }
+
+        return ok()
+    }
+
 }
 
 
@@ -197,7 +211,7 @@ function IngredientList() {
 
 function IngredientPriceForm({ id }: { id: string | undefined }) {
     const navigation = useNavigation();
-    const loaderData: LoaderData = useLoaderData<typeof loader>()
+    const loaderData = useLoaderData<typeof loader>()
 
     // all prices for all ingredients
     const ingredientsPrices = loaderData.prices
@@ -213,6 +227,8 @@ function IngredientPriceForm({ id }: { id: string | undefined }) {
 
     const formActionSubmission = ingredientPrice ? "ingredient-update-price" : "ingredient-add-price"
 
+    const isDisabledDeleteSubmissionButton = navigation.state === "submitting" || navigation.state === "loading" || !ingredientPrice
+    const isDisabledSaveSubmissionButton = navigation.state === "submitting" || navigation.state === "loading" || !ingredientPrice?.price || !ingredientPrice?.quantity || !ingredientPrice?.unit || !ingredientPrice?.supplierId
 
 
     return (
@@ -257,6 +273,10 @@ function IngredientPriceForm({ id }: { id: string | undefined }) {
                     </Fieldset>
                 </div>
             </div>
-            <Button type="submit" name="_action" value={formActionSubmission} className="w-full" disabled={navigation.state === "submitting" || navigation.state === "loading"}>Salvar</Button>
+            <div className="flex gap-2 md:gap-4">
+                <Button type="submit" variant="destructive" name="_action" value={"ingredient-delete-price"} className="w-full" disabled={isDisabledDeleteSubmissionButton}>Excluir Preço</Button>
+                <Button type="submit" name="_action" value={formActionSubmission} className="w-full" disabled={isDisabledSaveSubmissionButton}>Salvar Preço</Button>
+            </div>
+
         </Form >)
 }
