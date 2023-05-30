@@ -1,6 +1,6 @@
-import FirestoreClient from "../../firestore-client.server";
-import connection from "../../firestore-connection.server";
-import FirestoreModel from "../../firestore-model.server";
+import FirestoreClient from "./firestore-client.server";
+import connection from "./firestore-connection.server";
+import FirestoreModel from "./firestore-model.server";
 
 /**
  * The Firestore model factory, which creates a Firestore model.
@@ -13,7 +13,7 @@ import FirestoreModel from "../../firestore-model.server";
 function createFirestoreModel<T>(collectionName: string) {
   const client = new FirestoreClient(connection);
 
-  return new FirestoreModel(client, collectionName) as T & FirestoreModel<T>;
+  return new FirestoreModel<T>(client, collectionName);
 }
 
 export default createFirestoreModel;

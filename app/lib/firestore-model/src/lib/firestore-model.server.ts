@@ -1,4 +1,4 @@
-import { FirebaseError } from "firebase/app";
+import type { WhereFilterOp } from "firebase/firestore";
 import {
   addDoc,
   collection,
@@ -9,17 +9,17 @@ import {
   query,
   updateDoc,
   where,
-  WhereFilterOp,
 } from "firebase/firestore";
+import type { FirestoreDocumentUpdateError } from "./firestore-errors.server";
+import { FirestoreDocumentDeletionError } from "./firestore-errors.server";
 import {
   FirestoreDocumentCreationError,
-  FirestoreDocumentDeletionError,
   FirestoreDocumentNotFound,
-  FirestoreDocumentUpdateError,
-} from "./lib/errors";
+} from "./firestore-errors.server";
 import type FirestoreClient from "./firestore-client.server";
 
-import type { FirestoreDocument } from "./lib/types";
+import type { FirestoreDocument } from "../types";
+import errorMessage from "../utils/error-message";
 
 /**
  * @class FirestoreModel
@@ -105,18 +105,18 @@ export default class FirestoreModel<T> {
     try {
       const docRef = await addDoc(
         collection(this._client.connection, this._collectionName),
-        { ...data, createdAt: new Date().toISOString(), updatedAt: null }
+        {
+          ...data,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
       );
 
       const docSnap = await getDoc(docRef);
 
       return Object.assign(this, { ...docSnap.data(), id: docRef.id }) as T;
     } catch (e) {
-      if (e instanceof FirebaseError) {
-        throw new FirestoreDocumentCreationError(e.message);
-      }
-
-      throw new FirestoreDocumentCreationError();
+      throw new FirestoreDocumentCreationError(errorMessage(e));
     }
   }
 
@@ -142,8 +142,6 @@ export default class FirestoreModel<T> {
         documentId
       );
 
-      console.log(documentId, updatedData);
-
       await updateDoc(docRef, {
         ...updatedData,
         updatedAt: new Date().toISOString(),
@@ -151,11 +149,7 @@ export default class FirestoreModel<T> {
 
       return true;
     } catch (e) {
-      if (e instanceof FirebaseError) {
-        return new FirestoreDocumentCreationError(e.message);
-      }
-
-      throw new FirestoreDocumentCreationError();
+      throw new FirestoreDocumentCreationError(errorMessage(e));
     }
   }
 
@@ -178,11 +172,7 @@ export default class FirestoreModel<T> {
       );
       return true;
     } catch (e) {
-      if (e instanceof FirebaseError) {
-        return new FirestoreDocumentCreationError(e.message);
-      }
-
-      throw new FirestoreDocumentCreationError();
+      throw new FirestoreDocumentDeletionError(errorMessage(e));
     }
   }
 
@@ -210,11 +200,7 @@ export default class FirestoreModel<T> {
 
       return true;
     } catch (e) {
-      if (e instanceof FirebaseError) {
-        return new FirestoreDocumentCreationError(e.message);
-      }
-
-      throw new FirestoreDocumentCreationError();
+      throw new FirestoreDocumentDeletionError(errorMessage(e));
     }
   }
 

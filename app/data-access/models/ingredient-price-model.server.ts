@@ -1,4 +1,7 @@
-import { createFirestoreModel } from "~/lib/firestore-model/src";
+import {
+  createFirestoreModel,
+  type TFirestoreModel,
+} from "~/lib/firestore-model/src";
 
 interface IngredientPrice {
   id?: string;
@@ -9,7 +12,13 @@ interface IngredientPrice {
   price: number;
 }
 
-const IngredientPriceModel =
-  createFirestoreModel<IngredientPrice>("ingredients-prices");
+type TIngredientPriceModel = TFirestoreModel<IngredientPrice>;
 
-export { IngredientPriceModel, type IngredientPrice };
+const IngredientPriceModel =
+  createFirestoreModel<TIngredientPriceModel>("ingredients-prices");
+
+export {
+  IngredientPriceModel,
+  type IngredientPrice,
+  type TIngredientPriceModel,
+};

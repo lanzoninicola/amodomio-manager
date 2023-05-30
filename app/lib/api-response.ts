@@ -5,16 +5,17 @@ interface ApiResponseData extends Record<string, unknown> {
 }
 
 export function badRequest(data: ApiResponseData) {
-  return json(data, { status: 400 });
+  return json({ status: 400, ...data }, { status: 400 });
 }
 
 export function notFound(data: ApiResponseData) {
-  return json(data, { status: 404 });
+  return json({ status: 404, ...data }, { status: 404 });
 }
 
 export function ok(data?: ApiResponseData) {
   return json(
     {
+      status: 200,
       message: "ok",
       ...data,
     },

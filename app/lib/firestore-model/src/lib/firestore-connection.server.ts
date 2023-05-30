@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import getFirebaseConfig from "./lib/config/get-firebase-config.server";
+import getFirebaseConfig from "../config/get-firebase-config.server";
 
 let firebaseConfig = getFirebaseConfig();
 
