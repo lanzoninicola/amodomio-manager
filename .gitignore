@@ -7,3 +7,4 @@ node_modules
 .env
 
 /app/lib/firestore-model/src/lib/config/*.json
+app/lib/firestore-model/src/config/amodomio-manager.json
