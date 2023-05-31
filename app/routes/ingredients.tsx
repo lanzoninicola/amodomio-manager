@@ -1,8 +1,8 @@
 import type { ActionArgs, V2_MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { Form, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
-import { MoreHorizontal, Trash2 } from "lucide-react";
-import React from "react";
+import { Form, Link, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
+import { Delete, MoreHorizontal, Plus, Save, SaveIcon, Trash, Trash2 } from "lucide-react";
+import React, { useState } from "react";
 import Container from "~/components/layout/container/container";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
@@ -10,9 +10,10 @@ import Fieldset from "~/components/ui/fieldset";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
-import { IngredientModel, type Ingredient } from "~/data-access/models/ingredient-model.server";
-import { IngredientPriceModel, type TIngredientPriceModel } from "~/data-access/models/ingredient-price-model.server";
-import { SupplierModel, type Supplier } from "~/data-access/models/supplier-model.server";
+import { IngredientModel } from "~/data-access/models/ingredient-model.server";
+import type { TIngredientPriceModel } from "~/data-access/models/ingredient-price-model.server";
+import { IngredientPriceModel } from "~/data-access/models/ingredient-price-model.server";
+import { SupplierModel } from "~/data-access/models/supplier-model.server";
 import {
     Select,
     SelectContent,
@@ -20,12 +21,14 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "~/components/ui/select"
+} from "~/components/ui/select";
 
 import errorMessage from "~/lib/error-message";
 import { badRequest, ok } from "~/lib/api-response";
 import tryit from "~/lib/try-it";
 import { AlertError } from "~/components/layout/alerts/alerts";
+import type { IngredientPrice } from "~/data-access/models/ingredient-price-model.server";
+import type { Ingredient } from "~/data-access/models/ingredient-model.server";
 
 export const meta: V2_MetaFunction = () => {
     return [
@@ -34,11 +37,7 @@ export const meta: V2_MetaFunction = () => {
     ];
 };
 
-interface LoaderData {
-    ingredients: Ingredient[]
-    prices: TIngredientPriceModel[]
-    suppliers: Supplier[]
-}
+
 
 export async function loader() {
     const ingredients = await IngredientModel.findAll()
@@ -116,7 +115,7 @@ export async function action({ request }: ActionArgs) {
             return badRequest({ action: "ingredient-update-price", message: "Não foi possivel identificar o registro da apagar" })
         }
 
-        const [err, data] = await tryit(IngredientPriceModel.delete(values.ingredientPriceId as string)
+        const [err, data] = await tryit(IngredientPriceModel.delete(values.ingredientPriceId as string))
 
         if (err) {
             return badRequest({ action: "ingredient-delete-price", message: errorMessage(err) })
@@ -124,6 +123,8 @@ export async function action({ request }: ActionArgs) {
 
         return ok()
     }
+
+    return null
 
 }
 
@@ -158,13 +159,18 @@ export default function Index() {
 
             <Card className="mx-4 md:mx-8">
                 <CardHeader>
-                    <CardTitle>Lista ingredientes</CardTitle>
+                    <div className="flex justify-between">
+                        <CardTitle>Lista ingredientes</CardTitle>
+
+                        <Link to={`?showPrices="true"`}>
+                            <span>Visualizar preços</span>
+                        </Link>
+                    </div>
                     <CardDescription>
                         Lista de ingredientes cadastrados
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-6">
-
                     <IngredientList />
                 </CardContent>
             </Card>
@@ -177,106 +183,140 @@ export default function Index() {
 
 
 function IngredientList() {
-    const loaderData: LoaderData = useLoaderData<typeof loader>()
-    // Pressing "MoreHorizontal" button should be handled via SSR and not client-side
-    const [showPriceForm, setShowPriceForm] = React.useState(true)
-
+    const loaderData = useLoaderData<typeof loader>()
     if (!loaderData.ingredients || loaderData.ingredients.length === 0) return null
 
     return (
         <ul>
-            {loaderData.ingredients.map(ingredient => (
-                <li key={ingredient.id} className="mb-4">
-                    <Form method="delete" className="grid grid-cols-2 justify-between items-center mb-2" >
-                        <div>
-                            <Input type="hidden" name="id" value={ingredient.id} />
-                            <p>{ingredient.name}</p>
-                        </div>
-                        <div className="flex justify-end gap-2 md:gap-4 mb-2">
-                            <Button variant="destructive" size="sm" type="submit" name="_action" value="ingredient-delete">
-                                <Trash2 size={16} />
-                            </Button>
-                            <Button size="sm" onClick={() => setShowPriceForm(!showPriceForm)}>
-                                <MoreHorizontal size={16} />
-                            </Button>
-                        </div>
-                    </Form>
-                    {showPriceForm && <IngredientPriceForm id={ingredient.id} />}
-                    <Separator />
-                </li>
-            ))}
+            {loaderData.ingredients.map(ingredient => {
+                return (
+                    <li key={ingredient.id} className="mb-4">
+                        <IngredientItem ingredient={ingredient} />
+
+                    </li>
+                )
+            })}
         </ul>
     )
 }
 
-function IngredientPriceForm({ id }: { id: string | undefined }) {
-    const navigation = useNavigation();
-    const loaderData = useLoaderData<typeof loader>()
 
+function IngredientItem({ ingredient }: { ingredient: Ingredient }) {
+    const loaderData = useLoaderData<typeof loader>()
     // all prices for all ingredients
     const ingredientsPrices = loaderData.prices
-    // all ingredients
-    const ingredients = loaderData.ingredients
-    // all suppliers
-    const suppliers = loaderData.suppliers
+    // prices for this ingredient
+    const ingredientPrices: IngredientPrice[] = ingredientsPrices.filter(price => price.ingredientId === ingredient.id)
 
-    // Get the first price for this ingredient (if any)
-    const ingredientPrice = ingredientsPrices.sort((a, b) => a.updatedAt > b.updatedAt ? -1 : 1).find(p => p.ingredientId === id)
-    // Get the ingredient for this price
-    const ingredient = ingredients.find(i => i.id === ingredientPrice?.ingredientId)
-
-    const formActionSubmission = ingredientPrice ? "ingredient-update-price" : "ingredient-add-price"
-
-    const isDisabledDeleteSubmissionButton = navigation.state === "submitting" || navigation.state === "loading" || !ingredientPrice
-    const isDisabledSaveSubmissionButton = navigation.state === "submitting" || navigation.state === "loading" || !ingredientPrice?.price || !ingredientPrice?.quantity || !ingredientPrice?.unit || !ingredientPrice?.supplierId
+    const [prices, setPrices] = useState<Partial<IngredientPrice>[]>(ingredientPrices)
 
 
     return (
-        <Form method="post" className="mb-4">
-
-            <Input type="hidden" name="ingredientId" value={ingredient?.id} />
-            <Input type="hidden" name="ingredientPriceId" value={ingredientPrice?.id} />
-            <div className="flex flex-col md:flex-row md:gap-4">
-                <Fieldset>
-                    <Select name="supplierId" defaultValue={ingredientPrice && ingredientPrice.supplierId} >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Forneçedor" className="text-xs" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectGroup>
-                                {suppliers.map(supplier => (
-                                    <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>
-                                ))}
-                            </SelectGroup>
-                        </SelectContent>
-                    </Select>
-                </Fieldset>
-                <div className="flex gap-4">
-                    <Fieldset>
-                        <Select name="unit" defaultValue={ingredientPrice && ingredientPrice.unit} >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Unidade" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup >
-                                    <SelectItem value="gr">GR</SelectItem>
-                                    <SelectItem value="un">UN</SelectItem>
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
-                    </Fieldset>
-                    <Fieldset>
-                        <Input type="number" id="ingredient-quantity" placeholder="Quantitade" name="quantity" className="md:w-[100px]" defaultValue={ingredientPrice && ingredientPrice.quantity} />
-                    </Fieldset>
-                    <Fieldset>
-                        <Input type="number" id="ingredient-price" placeholder="Preço" name="price" className="md:w-[100px]" defaultValue={ingredientPrice && ingredientPrice.price} />
-                    </Fieldset>
+        <>
+            <Form method="delete" className="grid grid-cols-2 justify-between items-center mb-2" >
+                <div>
+                    <Input type="hidden" name="id" value={ingredient.id} />
+                    <p>{ingredient.name}</p>
                 </div>
-            </div>
-            <div className="flex gap-2 md:gap-4">
-                <Button type="submit" variant="destructive" name="_action" value={"ingredient-delete-price"} className="w-full" disabled={isDisabledDeleteSubmissionButton}>Excluir Preço</Button>
-                <Button type="submit" name="_action" value={formActionSubmission} className="w-full" disabled={isDisabledSaveSubmissionButton}>Salvar Preço</Button>
-            </div>
+                <div className="flex justify-end gap-2 md:gap-4 mb-2">
+                    <Button variant="destructive" size="sm" type="submit" name="_action" value="ingredient-delete">
+                        <Trash2 size={16} />
+                    </Button>
+                    <Button type="button" size="sm" onClick={() => {
 
-        </Form >)
+                        if (ingredient.id === undefined) return
+
+                        setPrices([...prices, {
+                            ingredientId: ingredient.id,
+                        }])
+                    }}>
+                        <Plus size={16} />
+                    </Button>
+                </div>
+            </Form>
+            {prices.length > 0 && (
+                prices.map(ingredientPrice => {
+
+                    if (ingredientPrice.ingredientId === undefined) return null
+
+                    return <IngredientPriceForm
+                        key={ingredientPrice.id}
+                        ingredientPriceId={ingredientPrice.id}
+                        ingredientId={ingredientPrice.ingredientId}
+                        supplierId={ingredientPrice.supplierId}
+                        unit={ingredientPrice.unit}
+                        quantity={ingredientPrice.quantity}
+                        price={ingredientPrice.price}
+
+                    />
+                }))
+            }
+            <Separator />
+        </>
+    )
+}
+
+interface IngredientPriceFormProps {
+    ingredientPriceId?: string
+    ingredientId: string
+    supplierId?: string
+    unit?: string
+    quantity?: number
+    price?: number
+}
+
+function IngredientPriceForm({ ingredientPriceId, ingredientId, supplierId, unit, quantity, price }: IngredientPriceFormProps) {
+    const navigation = useNavigation();
+    const loaderData = useLoaderData<typeof loader>()
+    // all suppliers
+    const suppliers = loaderData.suppliers
+    // supplier for this ingredient
+    const supplier = suppliers.find(supplier => supplier.id === supplierId)
+
+    const formActionSubmission = ingredientPriceId ? "ingredient-update-price" : "ingredient-add-price"
+
+    const isDisabledDeleteSubmissionButton = navigation.state === "submitting" || navigation.state === "loading"
+    const isDisabledSaveSubmissionButton = navigation.state === "submitting" || navigation.state === "loading"
+
+    return (
+
+        <Form method="post">
+            <div className="grid grid-cols-[auto_1fr] gap-2 items-center md:flex md:flex-row-reverse w-full md:items-start">
+                <div className="flex flex-col gap-2 md:flex-row-reverse">
+                    <Button type="submit" name="_action" value={formActionSubmission} disabled={isDisabledSaveSubmissionButton} size="sm"><Save size={16} /></Button>
+                    <Button type="submit" name="_action" value={"ingredient-delete-price"} variant="destructive" disabled={isDisabledDeleteSubmissionButton} size="sm"><Trash2 size={16} /></Button>
+                </div>
+                <div className="flex flex-col w-full md:flex-row gap-2">
+                    <Input type="hidden" name="ingredientPriceId" value={ingredientId} />
+                    <Input type="hidden" id="supplierId" name="supplierId" defaultValue={supplierId} />
+                    <Fieldset>
+                        <Input type="text" id="ingredient-supplier-name" placeholder="Forneçedor" name="supplierName" defaultValue={supplier?.name} />
+                    </Fieldset>
+                    <div className="flex gap-2">
+                        <Fieldset >
+                            <Select name="unit" defaultValue={unit} >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Unidade" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup >
+                                        <SelectItem value="gr">GR</SelectItem>
+                                        <SelectItem value="un">UN</SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </Fieldset>
+                        <Fieldset>
+                            <Input type="number" id="ingredient-quantity" placeholder="Quantitade" name="quantity" className="md:w-[100px]" defaultValue={quantity} />
+                        </Fieldset>
+                        <Fieldset>
+                            <Input type="number" id="ingredient-price" placeholder="Preço" name="price" className="md:w-[100px]" defaultValue={price} />
+                        </Fieldset>
+
+                    </div>
+                </div>
+
+            </div>
+        </Form>
+    )
 }
