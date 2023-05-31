@@ -12,15 +12,20 @@ export const meta: V2_MetaFunction = () => {
 };
 
 export async function loader({ request }) {
+
+  return null
 }
 
 export async function action({ request }) {
+
+  return null
 }
 
 
 
-export default function Index() {
 
 
-  return <div>Home Page</div>
+
+export default function HomePage() {
+  return <div className="grid place-items-center center w-screen h-screen text-4xl">This is the cardapio page</div>
 }

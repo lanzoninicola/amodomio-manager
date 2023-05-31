@@ -1,7 +1,7 @@
 import type { ActionArgs, V2_MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { Form, Link, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
-import { Delete, MoreHorizontal, Plus, Save, SaveIcon, Trash, Trash2 } from "lucide-react";
+import { Form, Link, Links, useActionData, useLoaderData, useNavigation, useSearchParams } from "@remix-run/react";
+import { Delete, ExternalLinkIcon, MoreHorizontal, Plus, Save, SaveIcon, Trash, Trash2, XSquare } from "lucide-react";
 import React, { useState } from "react";
 import Container from "~/components/layout/container/container";
 import { Button } from "~/components/ui/button";
@@ -29,6 +29,9 @@ import tryit from "~/lib/try-it";
 import { AlertError } from "~/components/layout/alerts/alerts";
 import type { IngredientPrice } from "~/data-access/models/ingredient-price-model.server";
 import type { Ingredient } from "~/data-access/models/ingredient-model.server";
+import { TabsList, TabsTrigger } from "@radix-ui/react-tabs";
+import { Tabs } from "~/components/ui/tabs";
+import { X } from "lucide-react";
 
 export const meta: V2_MetaFunction = () => {
     return [
@@ -135,25 +138,47 @@ export default function Index() {
     // navigation.state; // "idle" | "submitting" | "loading"
     const responseData = useActionData<typeof action>();
 
-    console.log({ responseData, navigation })
+    let [searchParams, setSearchParams] = useSearchParams();
+    const ingredientAction = searchParams.get("action")
 
 
 
     return (
         <Container>
             <div className="flex flex-col p-8">
-                <h1 className="text-2xl font-bold mb-4">
-                    Ingredientes
-                </h1>
-                <Form method="post" >
-                    <Fieldset>
-                        <Label htmlFor="ingredients-name">Nome</Label>
-                        <Input type="string" id="ingredient-name" placeholder="Nome ingrediente" name="name" required />
-                    </Fieldset>
-                    <Button type="submit" name="_action" value="create-ingredient" disabled={navigation.state === "submitting" || navigation.state === "loading"}>
-                        Salvar
-                    </Button>
-                </Form>
+                <div className="flex justify-between items-center mb-4">
+                    <h1 className="text-2xl font-bold">
+                        Ingredientes
+                    </h1>
+                    <Link to={`?action=new`}>
+                        <Button type="button" className="flex gap-2">
+                            <Plus size={16} />
+                            Novo Ingrediente
+                        </Button>
+                    </Link>
+                </div>
+                {ingredientAction === "new" && <Card>
+                    <CardHeader>
+                        <CardTitle>Novo Ingrediente</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid gap-6">
+                        <Form method="post" >
+                            <Fieldset>
+                                <Label htmlFor="ingredients-name">Nome</Label>
+                                <Input type="string" id="ingredient-name" placeholder="Nome ingrediente" name="name" required />
+                            </Fieldset>
+                            <div className="flex gap-2">
+                                <Button type="submit" name="_action" value="create-ingredient" disabled={navigation.state === "submitting" || navigation.state === "loading"}>
+                                    Salvar
+                                </Button>
+                                <Button type="button" variant={"outline"} className="border-2 border-black hover:border-[inherit]" disabled={navigation.state === "submitting" || navigation.state === "loading"}
+                                    onClick={() => setSearchParams(new URLSearchParams())}>
+                                    Fechar
+                                </Button>
+                            </div>
+                        </Form>
+                    </CardContent>
+                </Card>}
 
             </div>
 
@@ -202,14 +227,11 @@ function IngredientList() {
 
 
 function IngredientItem({ ingredient }: { ingredient: Ingredient }) {
-    const loaderData = useLoaderData<typeof loader>()
-    // all prices for all ingredients
-    const ingredientsPrices = loaderData.prices
-    // prices for this ingredient
-    const ingredientPrices: IngredientPrice[] = ingredientsPrices.filter(price => price.ingredientId === ingredient.id)
+    let [searchParams, _] = useSearchParams();
+    const activeIngredientId = searchParams.get("id")
+    const activeTab = searchParams.get("tab")
 
-    const [prices, setPrices] = useState<Partial<IngredientPrice>[]>(ingredientPrices)
-
+    const activeTabStyle = "bg-primary text-white rounded-md py-1"
 
     return (
         <>
@@ -222,18 +244,70 @@ function IngredientItem({ ingredient }: { ingredient: Ingredient }) {
                     <Button variant="destructive" size="sm" type="submit" name="_action" value="ingredient-delete">
                         <Trash2 size={16} />
                     </Button>
-                    <Button type="button" size="sm" onClick={() => {
 
-                        if (ingredient.id === undefined) return
-
-                        setPrices([...prices, {
-                            ingredientId: ingredient.id,
-                        }])
-                    }}>
-                        <Plus size={16} />
-                    </Button>
+                    <Link to={`?id=${ingredient.id}&tab="prices"`}>
+                        <Button type="button" size="sm">
+                            {activeIngredientId === ingredient.id ? <X size={16} /> : <MoreHorizontal size={16} />}
+                        </Button>
+                    </Link>
                 </div>
             </Form>
+            {activeIngredientId === ingredient.id && (
+                <>
+                    <div className="grid grid-cols-2 h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground mb-4">
+                        <Link to={`?id=${ingredient.id}&tab=prices`} className="w-full text-center">
+                            <div className={`${activeTab === "prices" && activeTabStyle} ${activeTab}`}>
+                                <span>Preços</span>
+                            </div>
+
+                        </Link >
+                        <Link to={`?id=${ingredient.id}&tab=stock`} className="w-full text-center">
+                            <div className={`${activeTab === "stock" && activeTabStyle}`}>
+                                <span>Armazenamento</span>
+                            </div>
+                        </Link>
+                    </div >
+
+                    {activeTab === "prices" && (<IngredientPriceList />)}
+
+                </>
+            )}
+
+
+            <Separator />
+        </>
+    )
+}
+
+
+function IngredientPriceList() {
+    let [searchParams, setSearchParams] = useSearchParams();
+    const ingredientId = searchParams.get("id") as string
+
+    console.log(searchParams.get("id"))
+    const loaderData = useLoaderData<typeof loader>()
+    // all prices for all ingredients
+    const ingredientsPrices = loaderData.prices
+    // prices for this ingredient
+    const ingredientPrices: IngredientPrice[] = ingredientsPrices.filter(price => price.ingredientId === ingredientId)
+
+    const [prices, setPrices] = useState<Partial<IngredientPrice>[]>(ingredientPrices)
+
+
+
+    return (
+        <div className="md:p-4">
+            <div className="mb-4">
+                <Button type="button" variant="outline" size="sm" className="flex gap-2 border-2 border-black hover:border-[inherit]" onClick={() => {
+                    if (ingredientId === undefined) return
+                    setPrices([...prices, {
+                        ingredientId: ingredientId,
+                    }])
+                }}>
+                    <Plus size={16} />
+                    <span>Adicionar preço</span>
+                </Button>
+            </div>
             {prices.length > 0 && (
                 prices.map(ingredientPrice => {
 
@@ -251,8 +325,8 @@ function IngredientItem({ ingredient }: { ingredient: Ingredient }) {
                     />
                 }))
             }
-            <Separator />
-        </>
+        </div>
+
     )
 }
 
@@ -275,16 +349,17 @@ function IngredientPriceForm({ ingredientPriceId, ingredientId, supplierId, unit
 
     const formActionSubmission = ingredientPriceId ? "ingredient-update-price" : "ingredient-add-price"
 
-    const isDisabledDeleteSubmissionButton = navigation.state === "submitting" || navigation.state === "loading"
-    const isDisabledSaveSubmissionButton = navigation.state === "submitting" || navigation.state === "loading"
+    const isEmptyForm = !supplierId && !unit && !quantity && !price
+    const isDisabledDeleteSubmissionButton = navigation.state === "submitting" || navigation.state === "loading" || isEmptyForm
+    const isDisabledSaveSubmissionButton = navigation.state === "submitting" || navigation.state === "loading" || isEmptyForm
 
     return (
 
-        <Form method="post">
+        <Form method="post" className="mb-2">
             <div className="grid grid-cols-[auto_1fr] gap-2 items-center md:flex md:flex-row-reverse w-full md:items-start">
-                <div className="flex flex-col gap-2 md:flex-row-reverse">
-                    <Button type="submit" name="_action" value={formActionSubmission} disabled={isDisabledSaveSubmissionButton} size="sm"><Save size={16} /></Button>
-                    <Button type="submit" name="_action" value={"ingredient-delete-price"} variant="destructive" disabled={isDisabledDeleteSubmissionButton} size="sm"><Trash2 size={16} /></Button>
+                <div className="flex flex-col gap-2 md:flex-row-reverse h-[120px] md:h-auto">
+                    <Button type="submit" name="_action" value={formActionSubmission} disabled={isDisabledSaveSubmissionButton} size="sm" ><Save size={16} /></Button>
+                    <Button type="submit" variant="destructive" name="_action" value={"ingredient-delete-price"} disabled={isDisabledDeleteSubmissionButton} size="sm"><Trash2 size={16} /></Button>
                 </div>
                 <div className="flex flex-col w-full md:flex-row gap-2">
                     <Input type="hidden" name="ingredientPriceId" value={ingredientId} />
