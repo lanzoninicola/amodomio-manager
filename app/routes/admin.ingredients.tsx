@@ -33,6 +33,9 @@ import { Switch } from "~/components/ui/switch";
 import { SupplierCombobox } from "./resources.suppliers";
 import { SupplierInput } from "./resources.supplier";
 import SearchableInput from "~/components/layout/searchable-input/searchable-input";
+import type { IngredientInfo } from "~/data-access/models/ingredient-info-model.server";
+import { IngredientInfoModel } from "~/data-access/models/ingredient-info-model.server";
+import { Textarea } from "~/components/ui/textarea";
 
 export const meta: V2_MetaFunction = () => {
     return [
@@ -45,22 +48,23 @@ export const meta: V2_MetaFunction = () => {
 
 export async function loader() {
     const ingredients = await IngredientModel.findAll()
+    const ingredientsInfo = await IngredientInfoModel.findAll()
     const ingredientsPrices = await IngredientPriceModel.findAll()
     const suppliers = await SupplierModel.findAll()
 
-    return json({ ingredients, prices: ingredientsPrices, suppliers })
+    return json({ ingredients, ingredientsInfo, prices: ingredientsPrices, suppliers })
 }
 
 export async function action({ request }: ActionArgs) {
     let formData = await request.formData();
     const { _action, ...values } = Object.fromEntries(formData);
 
-    if (_action === "create-ingredient") {
+    if (_action === "ingredient-create") {
 
         const [err, data] = await tryit(IngredientModel.add({ name: values.name }))
 
         if (err) {
-            return badRequest({ action: "create-ingredient", message: errorMessage(err) })
+            return badRequest({ action: "ingredient-create", message: errorMessage(err) })
         }
 
         return ok({ ...data, message: "Ingrediente criado com sucesso" })
@@ -74,6 +78,37 @@ export async function action({ request }: ActionArgs) {
         }
 
         return ok()
+    }
+
+    if (_action === "ingredient-info-create") {
+
+        const [err, data] = await tryit(IngredientInfoModel.add({
+            ingredientId: values.ingredientId,
+            description: values.description,
+            alternativeName: values.alternativeName,
+            // nutritionalInfo: values.nutritionalInfo,
+        }))
+
+        if (err) {
+            return badRequest({ action: "ingredient-create", message: errorMessage(err) })
+        }
+
+        return ok({ ...data, message: "Informações do ingrediente criadas com sucesso" })
+    }
+
+    if (_action === "ingredient-info-update") {
+        const [err, data] = await tryit(IngredientInfoModel.update(values.id as string, {
+            ingredientId: values.ingredientId,
+            description: values.description,
+            alternativeName: values.alternativeName,
+            // nutritionalInfo: values.nutritionalInfo,
+        }))
+
+        if (err) {
+            return badRequest({ action: "ingredient-create", message: errorMessage(err) })
+        }
+
+        return ok({ message: "Informações do ingrediente atualizado com sucesso" })
     }
 
     if (_action === "ingredient-add-price") {
@@ -189,7 +224,7 @@ export default function Index() {
                                 <Input type="string" id="ingredient-name" placeholder="Nome ingrediente" name="name" required />
                             </Fieldset>
                             <div className="flex gap-2">
-                                <Button type="submit" name="_action" value="create-ingredient" disabled={navigation.state === "submitting" || navigation.state === "loading"}>
+                                <Button type="submit" name="_action" value="ingredient-create" disabled={navigation.state === "submitting" || navigation.state === "loading"}>
                                     Salvar
                                 </Button>
                                 <Button type="button" variant={"outline"} className="border-2 border-black hover:border-[inherit]" disabled={navigation.state === "submitting" || navigation.state === "loading"}
@@ -260,7 +295,7 @@ function IngredientItem({ ingredient }: { ingredient: Ingredient }) {
                         <Trash2 size={16} />
                     </Button>
 
-                    <Link to={`?id=${ingredient.id}&tab=prices`}>
+                    <Link to={`?id=${ingredient.id}&tab=info`}>
                         <Button type="button" size="sm">
                             {activeIngredientId === ingredient.id ? <X size={16} /> : <MoreHorizontal size={16} />}
                         </Button>
@@ -269,7 +304,13 @@ function IngredientItem({ ingredient }: { ingredient: Ingredient }) {
             </Form>
             {activeIngredientId === ingredient.id && (
                 <>
-                    <div className="grid grid-cols-2 h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground mb-4">
+                    <div className="grid grid-cols-3 h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground mb-4">
+                        <Link to={`?id=${ingredient.id}&tab=info`} className="w-full text-center">
+                            <div className={`${activeTab === "info" && activeTabStyle} ${activeTab}`}>
+                                <span>Informações</span>
+                            </div>
+
+                        </Link >
                         <Link to={`?id=${ingredient.id}&tab=prices`} className="w-full text-center">
                             <div className={`${activeTab === "prices" && activeTabStyle} ${activeTab}`}>
                                 <span>Preços</span>
@@ -283,7 +324,10 @@ function IngredientItem({ ingredient }: { ingredient: Ingredient }) {
                         </Link>
                     </div >
 
-                    {activeTab === "prices" && (<IngredientPriceList />)}
+                    <div className="mb-4">
+                        {activeTab === "info" && (<IngredientInformation />)}
+                        {activeTab === "prices" && (<IngredientPriceList />)}
+                    </div>
 
                 </>
             )}
@@ -291,6 +335,45 @@ function IngredientItem({ ingredient }: { ingredient: Ingredient }) {
 
             <Separator />
         </>
+    )
+}
+
+function IngredientInformation() {
+    let [searchParams, _] = useSearchParams();
+    const activeIngredientId = searchParams.get("id")
+    const navigation = useNavigation()
+
+    const loaderData = useLoaderData<typeof loader>()
+    const ingredientsInfo: IngredientInfo[] = loaderData?.ingredientsInfo
+    const ingredientInfo = ingredientsInfo.find(i => i.ingredientId === activeIngredientId)
+
+    const formActionSubmission = ingredientInfo?.id ? "ingredient-info-update" : "ingredient-info-create"
+
+    return (
+        <div className="p-4">
+            <Form method="post" className="w-full">
+                <div className="mb-4">
+                    <Button type="submit" name="_action" value={formActionSubmission} disabled={navigation.state === "submitting" || navigation.state === "loading"} className="flex gap-2">
+                        <Save size={16} />
+                        Salvar
+                    </Button>
+                </div>
+                <Input type="hidden" name="id" defaultValue={ingredientInfo?.id} />
+                <Input type="hidden" name="ingredientId" defaultValue={activeIngredientId || undefined} />
+
+                <div className="mb-4 w-full">
+                    <Label htmlFor="alternative-name">Nome alternativo</Label>
+                    <Input id="alternative-name" name="alternativeName" placeholder="Nome alternativo" defaultValue={ingredientInfo?.alternativeName} className="w-full" />
+                </div>
+
+
+                <div className="mb-4 w-full">
+                    <Label htmlFor="description">Descrição ingrediente</Label>
+                    <Textarea id="description" name="description" placeholder="Descrição" defaultValue={ingredientInfo?.description} className="w-full" />
+                </div>
+
+            </Form>
+        </div>
     )
 }
 

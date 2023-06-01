@@ -16,7 +16,7 @@ interface IngredientPrice {
 type TIngredientPriceModel = TFirestoreModel<IngredientPrice>;
 
 const IngredientPriceModel =
-  createFirestoreModel<TIngredientPriceModel>("ingredients-prices");
+  createFirestoreModel<TIngredientPriceModel>("ingredients_prices");
 
 export {
   IngredientPriceModel,
