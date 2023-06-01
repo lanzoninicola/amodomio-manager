@@ -12,6 +12,10 @@ export function notFound(data: ApiResponseData) {
   return json({ status: 404, ...data }, { status: 404 });
 }
 
+export function serverError(data: ApiResponseData) {
+  return json({ status: 500, ...data }, { status: 500 });
+}
+
 export function ok(data?: ApiResponseData) {
   return json(
     {

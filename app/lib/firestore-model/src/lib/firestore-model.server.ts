@@ -1,4 +1,7 @@
-import type { WhereFilterOp } from "firebase/firestore";
+import type {
+  QueryNonFilterConstraint,
+  WhereFilterOp,
+} from "firebase/firestore";
 import {
   addDoc,
   collection,
@@ -20,6 +23,12 @@ import type FirestoreClient from "./firestore-client.server";
 
 import type { FirestoreDocument } from "../types";
 import errorMessage from "../utils/error-message";
+
+type whereCompoundConditions = {
+  field: string;
+  op: WhereFilterOp;
+  value: any;
+}[];
 
 /**
  * @class FirestoreModel
@@ -258,20 +267,18 @@ export default class FirestoreModel<T> {
   }
 
   async whereCompound(
-    field: string,
-    operator: WhereFilterOp,
-    value: any,
-    field2: string,
-    operator2: WhereFilterOp,
-    value2: any
+    conditions: whereCompoundConditions
   ): Promise<T[] | FirestoreDocumentNotFound> {
     let result: FirestoreDocument[] = [];
+
+    const queryFilters = conditions.map((condition) => {
+      return where(condition.field, condition.op, condition.value);
+    });
 
     const querySnapshot = await getDocs(
       query(
         collection(this._client.connection, this._collectionName),
-        where(field, operator, value),
-        where(field2, operator2, value2)
+        ...queryFilters
       )
     );
 
