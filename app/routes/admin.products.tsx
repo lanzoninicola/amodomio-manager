@@ -13,15 +13,35 @@ import tryit from "~/lib/try-it";
 import type { Product } from "~/data-access/models/product-model.server";
 import { ProductModel } from "~/data-access/models/product-model.server";
 import { badRequest, ok, serverError } from "~/lib/api-response";
+import type { ProductComposition } from "~/data-access/models/product-composition-model.server";
 import { ProductCompositionModel } from "~/data-access/models/product-composition-model.server";
 import { Separator } from "~/components/ui/separator";
 import errorMessage from "~/lib/error-message";
 import { Textarea } from "~/components/ui/textarea";
 import { Switch } from "~/components/ui/switch";
-import useCurrentUrl from "~/components/hooks/use-current-url";
 import type { ProductInfo } from "~/data-access/models/product-info-model.server";
 import { ProductInfoModel } from "~/data-access/models/product-info-model.server";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "~/components/ui/select";
+import { IngredientModel } from "~/data-access/models/ingredient-model.server";
+import { useState } from "react";
+import { IngredientPriceModel } from "~/data-access/models/ingredient-price-model.server";
+import uppercase from "~/utils/to-uppercase";
 
+// all the elemnts that are ingredients or products, part of a composition
+interface CompositionElement {
+    id: string | undefined
+    name: string
+    type: string
+    unit: string
+    unitPrice: number
+}
 
 export async function loader() {
 
@@ -35,18 +55,52 @@ export async function loader() {
         return serverError({ message: errProductsInfo.message })
     }
 
-
-
-
     const [errProductsCompositions, productsCompositions] = await tryit(ProductCompositionModel.findAll())
     if (errProductsCompositions) {
         return serverError({ message: errProductsCompositions.message })
     }
 
+    const [errIngredients, ingredients] = await tryit(IngredientModel.findAll())
+    if (errIngredients) {
+        return serverError({ message: errIngredients.message })
+    }
+
+    // get all ingredients prices that are default
+    const [errIngredientsPrices, ingredientsPrices] = await tryit(IngredientPriceModel.findWhere("defaultPrice", "==", true))
+    if (errIngredientsPrices) {
+        return serverError({ message: errIngredientsPrices.message })
+    }
+
+    // all the elemnts that are ingredients and products part of a composition
+    const compositionsElements: CompositionElement[] = products
+        .filter(p => productsInfo.find(pi => pi.productId === p.id && pi.isAlsoAnIngredient === true))
+        .map(p => {
+            return {
+                id: p.id,
+                name: p.name,
+                type: "product",
+                unit: "un",
+                unitPrice: productsCompositions.filter(pc => pc.productId === p.id).reduce((acc, curr) => {
+                    return acc + (ingredientsPrices.find(ip => ip.ingredientId === curr.elementId)?.unitPrice || 0)
+                }, 0)
+
+            }
+        }).concat(ingredients.map(i => {
+            return {
+                id: i.id,
+                name: i.name,
+                type: "ingredient",
+                unit: ingredientsPrices.find(ip => ip.ingredientId === i.id)?.unit || "un",
+                unitPrice: ingredientsPrices.find(ip => ip.ingredientId === i.id)?.unitPrice || 0
+            }
+        }))
+
     return json({
         products,
         productsInfo,
-        productsCompositions
+        productsCompositions,
+        compositionsElements,
+        ingredients
     })
 }
 
@@ -104,11 +158,40 @@ export async function action({ request }: ActionArgs) {
         return ok({ message: "Informaçẽs do produto atualizados com sucesso" })
     }
 
+    if (_action === "composition-add-element") {
 
+        const [err, data] = await tryit(ProductCompositionModel.add({
+            productId: values.productId,
+            elementId: values.elementId,
+            elementType: values.elementType,
+            quantity: values.quantity,
+            unit: values.unit,
+            cost: values.cost
+        }))
 
+        if (err) {
+            return badRequest({ action: "composition-add-element", message: errorMessage(err) })
+        }
 
+        return ok({ message: "Elemento adicionado com sucesso" })
+    }
+
+    if (_action === "composition-delete-element") {
+
+        const [err, data] = await tryit(ProductCompositionModel.delete(values.productCompositionId as string))
+
+        if (err) {
+            return badRequest({ action: "composition-delete-element", message: errorMessage(err) })
+        }
+
+        return ok({ message: "Elemento removido com sucesso" })
+
+    }
 
     return null
+
+
+
 }
 
 export default function Index() {
@@ -179,7 +262,9 @@ export default function Index() {
 
 function ProductList() {
     const loaderData = useLoaderData<typeof loader>()
-    if (!loaderData.products || loaderData.products.length === 0) {
+
+
+    if (!loaderData?.products || loaderData.products.length === 0) {
         return (
             <div className="grid place-items-center">
                 <p className="text-xl font-muted-foreground">Nenhum produto encontrado</p>
@@ -230,7 +315,7 @@ function ProductItem({ product }: { product: Product }) {
             </Form>
             {activeProductId === product.id && (
                 <>
-                    <div className="grid grid-cols-3 h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground mb-8">
+                    <div className="grid grid-cols-2 grid-rows-2 md:grid-rows-1 md:grid-cols-3 h-20 md:h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground mb-8">
                         <Link to={`?id=${product.id}&tab=info`} className="w-full text-center">
                             <div className={`${activeTab === "info" && activeTabStyle} ${activeTab}`}>
                                 <span>Informações</span>
@@ -251,7 +336,7 @@ function ProductItem({ product }: { product: Product }) {
                     </div >
                     <div className="mb-8">
                         {activeTab === "info" && (<ProductInformation />)}
-                        {/* {activeTab === "composition" && (<ElementsList />)} */}
+                        {activeTab === "composition" && (<ProductCompositionComponent />)}
                     </div>
                 </>
             )}
@@ -290,27 +375,12 @@ function ProductInformation() {
                     <Textarea id="description" name="description" placeholder="Descrição" defaultValue={productInfo?.description} className="w-full" />
                 </div>
                 <div className="grid grid-cols-2 gap-6 items-start">
-                    {/* <Fieldset>
-                    <div className="flex justify-between">
-                        <Label htmlFor="is-alternative-description-menu" className="text-sm">
-                            Descrição diferente para o cardapio
-                        </Label>
-                        <Link to={`${currentUrl}&alternativeDescription=true`}>
-                            <Switch id="is-alternative-description-menu" name="isAlternativeDescriptionOnMenu" defaultChecked={product?.isAlternativeDescriptionOnMenu} />
-                        </Link>
-                    </div>
-                </Fieldset>
-                {alternativeDescriptionEnabled === true && (
-                    <Fieldset>
-                        <Label htmlFor="alternative-description-menu">Descrição no cardapio</Label>
-                        <Textarea id="alternative-description-menu" name="alternativeDescriptionOnMenu" placeholder="Descrição no cardapio" defaultValue={product?.description} />
-                    </Fieldset>
-                )} */}
+
                     <div>
                         <Fieldset>
                             <div className="flex justify-between">
                                 <Label htmlFor="is-also-ingredient" className="text-sm">
-                                    Tambem é um ingrediente
+                                    E' tamben um ingrediente
                                 </Label>
                                 <Switch id="is-also-ingredient" name="isAlsoAnIngredient" defaultChecked={productInfo?.isAlsoAnIngredient} />
                             </div>
@@ -329,33 +399,35 @@ function ProductInformation() {
         </div>
     )
 }
-/**
-function ElementsList() {
+
+function ProductCompositionComponent() {
     let [searchParams, setSearchParams] = useSearchParams();
     const productId = searchParams.get("id") as string
 
     const loaderData = useLoaderData<typeof loader>()
     // all products compositions
-    const productsCompositions = loaderData.productsCompositions
+    const productsCompositions: ProductComposition[] = loaderData.productsCompositions
+    // the composition of the current product
+    const productComposition: ProductComposition[] = productsCompositions.filter(p => p.productId === productId)
 
-    const productComposition = productsCompositions.filter(pc => pc. === productId)
 
     return (
         <ul className="md:p-4">
-            {ingredientPrices.length > 0 && (
-                ingredientPrices.map(ingredientPrice => {
+            {productComposition.length > 0 && (
+                productComposition.map(element => {
 
-                    if (ingredientPrice.productId === undefined) return null
+                    if (element.productId === undefined) return null
 
                     return (
-                        <li key={ingredientPrice.id || Math.random().toString(32).slice(2)}>
+                        <li key={element.id || Math.random().toString(32).slice(2)}>
                             <CompositionElementForm
-                                productCompositionId={undefined}
+                                productCompositionId={element?.id}
                                 productId={productId}
-                                elementId={undefined}
-                                elementType={undefined}
-                                unit={undefined}
-                                quantity={undefined}
+                                elementId={element?.elementId}
+                                elementType={element?.elementType}
+                                unit={element?.unit}
+                                quantity={element?.quantity}
+                                cost={element?.cost}
                             />
                         </li>
                     )
@@ -369,6 +441,7 @@ function ElementsList() {
                     elementType={undefined}
                     unit={undefined}
                     quantity={undefined}
+                    cost={0}
                 />
             </li>
         </ul>
@@ -383,19 +456,29 @@ interface CompositionElementFormProps {
     elementType?: string
     unit?: string
     quantity?: number
+    cost?: number
 }
 
-function CompositionElementForm({ productCompositionId, productId, elementId, elementType, unit, quantity, price, isDefault }: CompositionElementFormProps) {
+
+function CompositionElementForm({ productCompositionId, productId, elementId, elementType, unit, quantity, cost }: CompositionElementFormProps) {
     const navigation = useNavigation();
     const loaderData = useLoaderData<typeof loader>()
 
-    // all suppliers
-    const suppliers = loaderData.suppliers
+    // all products compositions, remove the element that also is the current product (eg. Massa cannot be a composition of Massa)
+    const elements: CompositionElement[] = loaderData.compositionsElements.filter(e => e.id !== productId)
 
     const formActionSubmission = productCompositionId ? "composition-update-element" : "composition-add-element"
 
     const isDisabledDeleteSubmissionButton = navigation.state === "submitting" || navigation.state === "loading"
     const isDisabledSaveSubmissionButton = navigation.state === "submitting" || navigation.state === "loading"
+
+    // this state is used to update the elementType when the elementId is changed
+    const [elementIdSelected, setElementIdSelected] = useState(elementId)
+    const [quantityValue, setQuantityValue] = useState(quantity)
+
+    const elementSelected: CompositionElement = elements.find(e => e.id === elementIdSelected)
+
+    console.log(elementSelected)
 
     return (
 
@@ -404,22 +487,26 @@ function CompositionElementForm({ productCompositionId, productId, elementId, el
 
                 <div className="flex flex-col gap-2 md:flex-row-reverse h-[120px] md:h-auto">
                     <Button type="submit" name="_action" value={formActionSubmission} disabled={isDisabledSaveSubmissionButton} size="sm" ><Save size={16} /></Button>
-                    <Button type="submit" variant="destructive" name="_action" value={"ingredient-delete-price"} disabled={isDisabledDeleteSubmissionButton} size="sm"><Trash2 size={16} /></Button>
+                    <Button type="submit" variant="destructive" name="_action" value={"composition-delete-element"} disabled={isDisabledDeleteSubmissionButton} size="sm"><Trash2 size={16} /></Button>
                 </div>
                 <div className="mb-4 w-full">
                     <div className="flex flex-col w-full">
                         <div className="flex flex-col w-full md:flex-row gap-2">
-                            <Input type="hidden" name="ingredientPriceId" value={ingredientPriceId} />
-                            <Input type="hidden" name="ingredientId" value={ingredientId} />
+                            <Input type="hidden" name="productCompositionId" value={productCompositionId} />
+                            <Input type="hidden" name="productId" value={productId} />
+                            <Input type="hidden" name="elementType" defaultValue={elementType || elementSelected?.type} />
+                            <Input type="text" name="elementType" value={elementSelected?.unitPrice || 0} readOnly />
                             <Fieldset>
-                                <Select name="supplierId" defaultValue={supplierId} required >
+                                <Select name="elementId" defaultValue={elementId} required onValueChange={setElementIdSelected}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Forneçedor" className="text-xs" />
+                                        <SelectValue placeholder="Elemento da composição" className="text-xs" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectGroup>
-                                            {suppliers.map(supplier => (
-                                                <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>
+                                            {elements.map(e => (
+                                                <SelectItem key={e.id} value={e.id} className={`${e.type === "product" && "font-semibold"}`}>
+                                                    {e.name}
+                                                </SelectItem>
                                             ))}
                                         </SelectGroup>
                                     </SelectContent>
@@ -427,7 +514,7 @@ function CompositionElementForm({ productCompositionId, productId, elementId, el
                             </Fieldset>
 
                             <div className="flex gap-2">
-                                <Fieldset >
+                                {/* <Fieldset >
                                     <Select name="unit" defaultValue={unit} required >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Unidade" />
@@ -439,28 +526,25 @@ function CompositionElementForm({ productCompositionId, productId, elementId, el
                                             </SelectGroup>
                                         </SelectContent>
                                     </Select>
+                                </Fieldset> */}
+                                <Fieldset>
+                                    <Input type="text" id="element-unit" required placeholder="Unidade" name="unit" className="md:w-[50px] outline-none border-none" defaultValue={uppercase(unit || elementSelected?.unit)} readOnly />
                                 </Fieldset>
                                 <Fieldset>
-                                    <Input type="number" id="ingredient-quantity" required placeholder="Quantitade" name="quantity" className="md:w-[100px]" defaultValue={quantity} />
+                                    <Input type="number" id="element-quantity" required placeholder="Quantitade" name="quantity" className="md:w-[100px]" defaultValue={quantity} onChange={(e) => {
+                                        setQuantityValue(Number(e.target.value))
+                                    }} />
                                 </Fieldset>
                                 <Fieldset>
-                                    <Input type="number" id="ingredient-price" required placeholder="Preço" name="price" className="md:w-[100px]" defaultValue={price} />
+                                    <Input type="text" id="element-cost" name="cost" className="md:w-[50px] outline-none border-none" value={cost || (elementSelected?.unitPrice || 0) * (quantityValue || 0)} readOnly />
                                 </Fieldset>
-
                             </div>
 
                         </div>
-                        <div className="flex justify-between">
-                            <Label htmlFor="default-price-mode" className="text-sm">Esse é o preço preferençial</Label>
-                            <Switch id="default-price" name="defaultPrice" defaultChecked={isDefault === true ? true : false} />
-                        </div>
                     </div>
                 </div>
-
-
             </div>
         </Form>
     )
 }
 
- */

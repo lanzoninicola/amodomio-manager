@@ -10,6 +10,7 @@ interface IngredientPrice {
   unit: string;
   quantity: number;
   price: number;
+  unitPrice: number;
   defaultPrice: boolean;
 }
 

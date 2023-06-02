@@ -213,6 +213,33 @@ export default class FirestoreModel<T> {
     }
   }
 
+  async deleteWhere(
+    conditions: whereCompoundConditions
+  ): Promise<true | FirestoreDocumentDeletionError> {
+    try {
+      const queryFilters = conditions.map((condition) => {
+        return where(condition.field, condition.op, condition.value);
+      });
+
+      const querySnapshot = await getDocs(
+        query(
+          collection(this._client.connection, this._collectionName),
+          ...queryFilters
+        )
+      );
+
+      querySnapshot.forEach(async (document) => {
+        await deleteDoc(
+          doc(this._client.connection, this._collectionName, document.id)
+        );
+      });
+
+      return true;
+    } catch (e) {
+      throw new FirestoreDocumentDeletionError(errorMessage(e));
+    }
+  }
+
   /**
    * Return documents that match the query
    *

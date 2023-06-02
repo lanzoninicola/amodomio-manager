@@ -36,6 +36,7 @@ import SearchableInput from "~/components/layout/searchable-input/searchable-inp
 import type { IngredientInfo } from "~/data-access/models/ingredient-info-model.server";
 import { IngredientInfoModel } from "~/data-access/models/ingredient-info-model.server";
 import { Textarea } from "~/components/ui/textarea";
+import { ProductCompositionModel } from "~/data-access/models/product-composition-model.server";
 
 export const meta: V2_MetaFunction = () => {
     return [
@@ -71,10 +72,30 @@ export async function action({ request }: ActionArgs) {
     }
 
     if (_action === "ingredient-delete") {
+
+        const [errProductComposition, productCompositionRecords] = await tryit(ProductCompositionModel.findWhere("ingredientId", "==", values.id as string))
+
+        if (errProductComposition) {
+            return badRequest({ action: "ingredient-delete", message: errorMessage(errProductComposition) })
+        }
+
+        if (productCompositionRecords.length >= 1) {
+            return badRequest({ action: "ingredient-delete", message: "Este ingrediente está sendo usado em um produto" })
+        }
+
+
         const [err, data] = await tryit(IngredientModel.delete(values.id as string))
 
         if (err) {
             return badRequest({ action: "ingredient-delete", message: errorMessage(err) })
+        }
+
+        const [err2, data2] = await tryit(IngredientInfoModel.deleteWhere(
+            [{ field: "ingredientId", op: "==", value: values.id as string }]
+        ))
+
+        if (err2) {
+            return badRequest({ action: "ingredient-delete", message: errorMessage(err2) })
         }
 
         return ok()
@@ -122,12 +143,17 @@ export async function action({ request }: ActionArgs) {
             return badRequest({ action: "ingredient-update-price", message: "Já existe um preço padrão para este ingrediente" })
         }
 
+        const price = Number(values.price) ?? 0
+        const quantity = Number(values.quantity) ?? 0
+        const unitPrice = (price / quantity).toFixed(2)
+
         const [err, data] = await tryit(IngredientPriceModel.add({
             ingredientId: values.ingredientId,
             supplierId: values.supplierId,
             unit: values.unit,
-            quantity: values.quantity,
-            price: values.price,
+            quantity: quantity,
+            price: price,
+            unitPrice: unitPrice,
             defaultPrice: values.defaultPrice === "on" ? true : false
         }))
 
@@ -153,12 +179,17 @@ export async function action({ request }: ActionArgs) {
             return badRequest({ action: "ingredient-update-price", message: "Já existe um preço padrão para este ingrediente" })
         }
 
+        const price = Number(values.price) ?? 0
+        const quantity = Number(values.quantity) ?? 0
+        const unitPrice = (price / quantity).toFixed(2)
+
         const [err, data] = await tryit(IngredientPriceModel.update(values.ingredientPriceId as string, {
             ingredientId: values.ingredientId,
             supplierId: values.supplierId,
             unit: values.unit,
-            quantity: values.quantity,
-            price: values.price,
+            quantity: quantity,
+            price: price,
+            unitPrice: unitPrice,
             defaultPrice: values.defaultPrice === "on" ? true : false
         }))
 

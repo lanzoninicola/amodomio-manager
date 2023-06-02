@@ -8,6 +8,7 @@ interface ProductComposition {
   elementType: "ingredient" | "product";
   unit: string;
   quantity: number;
+  cost: number;
 }
 
 const ProductCompositionModel = createFirestoreModel<ProductComposition>(
