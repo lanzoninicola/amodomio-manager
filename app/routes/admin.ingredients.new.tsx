@@ -1,3 +1,4 @@
+
 import { type ActionArgs } from "@remix-run/node";
 import { Form } from "@remix-run/react";
 import Container from "~/components/layout/container/container";
@@ -6,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "~/components/ui/card";
 import Fieldset from "~/components/ui/fieldset";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { ProductEntity } from "~/domain/product/product.entity";
+import { IngredientEntity } from "~/domain/ingredient/ingredient.entity";
 import errorMessage from "~/utils/error-message";
 import { badRequest, ok } from "~/utils/http-response.server";
 import tryit from "~/utils/try-it";
@@ -15,40 +16,39 @@ export async function action({ request }: ActionArgs) {
     let formData = await request.formData();
     const { _action, ...values } = Object.fromEntries(formData);
 
-    if (_action === "product-create") {
+    if (_action === "ingredient-create") {
 
-        const productEntity = new ProductEntity()
-        const [err, data] = await tryit(productEntity.create({
+        const ingredientEntity = new IngredientEntity()
+        const [err, data] = await tryit(ingredientEntity.create({
             name: values.name as string,
-            disabled: false
         }))
 
         if (err) {
-            return badRequest({ action: "product-create", message: errorMessage(err) })
+            return badRequest({ action: "ingredient-create", message: errorMessage(err) })
         }
 
-        return ok({ ...data, message: "Produto criado com sucesso" })
+        return ok({ ...data, message: "Ingrediente criado com sucesso" })
     }
 
     return null
 }
 
 
-export default function SingleProductNew() {
+export default function SingleIngredientNew() {
     return (
         <Container>
             <Card>
                 <CardHeader>
-                    <CardTitle>Novo Produto</CardTitle>
+                    <CardTitle>Novo Ingrediente</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-6">
                     <Form method="post" >
                         <Fieldset>
-                            <Label htmlFor="product-name">Nome</Label>
-                            <Input type="string" id="product-name" placeholder="Nome produto" name="name" required />
+                            <Label htmlFor="ingredient-name">Nome</Label>
+                            <Input type="string" id="ingredient-name" placeholder="Nome ingrediente" name="name" required />
                         </Fieldset>
                         <div className="flex gap-2">
-                            <SubmitButton actionName="product-create" />
+                            <SubmitButton actionName="ingredient-create" />
                         </div>
                     </Form>
                 </CardContent>

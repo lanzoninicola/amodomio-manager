@@ -27,7 +27,9 @@ export async function action({ request }: ActionArgs) {
             productId: values.productId,
             show: values.show,
             description: values.description,
-            italianProductName: values.italianProductName
+            italianProductName: values.italianProductName,
+            isVegetarian: values.isVegetarian,
+            isGlutenFree: values.isGlutenFree
         }))
 
         if (err) {
@@ -43,7 +45,9 @@ export async function action({ request }: ActionArgs) {
             productId: values.productId,
             show: values.show,
             description: values.description,
-            italianProductName: values.italianProductName
+            italianProductName: values.italianProductName,
+            isVegetarian: values.isVegetarian,
+            isGlutenFree: values.isGlutenFree
         }))
 
         if (err) {
@@ -91,6 +95,22 @@ export default function SingleProductMenu() {
                         <div className="flex justify-between items-center">
                             <Label htmlFor="italian-product-name">Nome produto em italiano</Label>
                             <Input id="italian-product-name" name="italian-product-name" placeholder="Nome" defaultValue={productMenu?.italianProductName} className="max-w-[250px]" />
+                        </div>
+                    </Fieldset>
+                    <Fieldset>
+                        <div className="flex justify-between">
+                            <Label htmlFor="is-vegetarian" className="text-sm">
+                                Produto vegetariano
+                            </Label>
+                            <Switch id="is-vegetarian" name="isVegetarian" defaultChecked={productMenu?.isVegetarian} />
+                        </div>
+                    </Fieldset>
+                    <Fieldset>
+                        <div className="flex justify-between">
+                            <Label htmlFor="is-gluten-free" className="text-sm">
+                                Produto sem gluten
+                            </Label>
+                            <Switch id="is-gluten-free" name="isGlutenFree" defaultChecked={productMenu?.isGlutenFree} />
                         </div>
                     </Fieldset>
                 </div>

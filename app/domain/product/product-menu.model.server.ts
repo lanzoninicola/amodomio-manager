@@ -7,6 +7,8 @@ interface ProductMenu {
   show: boolean;
   description: string;
   italianProductName: string;
+  isVegetarian: boolean;
+  isGlutenFree: boolean;
 }
 
 const ProductMenuModel = createFirestoreModel<ProductMenu>("products_menus");

@@ -4,7 +4,7 @@ interface Product {
   id?: string;
   name: string;
   disabled: boolean;
-  cost: number;
+  cost?: number;
 }
 
 const ProductModel = createFirestoreModel<Product>("products");

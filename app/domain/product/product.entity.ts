@@ -1,3 +1,4 @@
+import { serverError } from "~/utils/http-response.server";
 import {
   type ProductComposition,
   ProductCompositionModel,
@@ -18,6 +19,15 @@ export interface ProductWithAssociations extends Product {
 }
 
 export class ProductEntity {
+  async create(product: Product): Promise<Product> {
+    this.validate(product);
+    return this.save(product);
+  }
+
+  private async save(product: Product): Promise<Product> {
+    return await ProductModel.add(product);
+  }
+
   async findAll(): Promise<Product[]> {
     return await ProductModel.findAll();
   }
@@ -29,8 +39,6 @@ export class ProductEntity {
     }
   ): Promise<Product | ProductWithAssociations | null> {
     let product = await ProductModel.findById(id);
-
-    console.log(product);
 
     if (!product) {
       return null;
@@ -64,5 +72,11 @@ export class ProductEntity {
 
   async getProductInfo(id: string) {
     return await ProductInfoModel.findById(id);
+  }
+
+  validate(product: Product) {
+    if (!product.name) {
+      serverError("O nome do produto é obrigatório");
+    }
   }
 }
