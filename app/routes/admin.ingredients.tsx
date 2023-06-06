@@ -1,42 +1,27 @@
-import type { ActionArgs, V2_MetaFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Form, Link, useActionData, useLoaderData, useNavigation, useSearchParams } from "@remix-run/react";
-import { MoreHorizontal, Plus, Save, Trash2 } from "lucide-react";
-import { useState } from "react";
+
+import { Separator, Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectItem } from "@radix-ui/react-select";
+import type { V2_MetaFunction, ActionArgs } from "@remix-run/node";
+import { useNavigation, useActionData, useSearchParams, Form, useLoaderData, Link } from "@remix-run/react";
+import { Plus, Trash2, X, MoreHorizontal, Save } from "lucide-react";
+import { AlertError } from "~/components/layout/alerts/alerts";
 import Container from "~/components/layout/container/container";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "~/components/ui/card";
 import Fieldset from "~/components/ui/fieldset";
 import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { Separator } from "~/components/ui/separator";
-import { IngredientModel } from "~/data-access/models/ingredient-model.server";
-import { IngredientPriceModel } from "~/data-access/models/ingredient-price-model.server";
-import { SupplierModel } from "~/data-access/models/supplier-model.server";
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "~/components/ui/select";
-
-import errorMessage from "~/lib/error-message";
-import { badRequest, ok } from "~/lib/api-response";
-import tryit from "~/lib/try-it";
-import { AlertError } from "~/components/layout/alerts/alerts";
-import type { IngredientPrice } from "~/data-access/models/ingredient-price-model.server";
-import type { Ingredient } from "~/data-access/models/ingredient-model.server";
-import { X } from "lucide-react";
-import { Switch } from "~/components/ui/switch";
-import { SupplierCombobox } from "./resources.suppliers";
-import { SupplierInput } from "./resources.supplier";
-import SearchableInput from "~/components/layout/searchable-input/searchable-input";
-import type { IngredientInfo } from "~/data-access/models/ingredient-info-model.server";
-import { IngredientInfoModel } from "~/data-access/models/ingredient-info-model.server";
 import { Textarea } from "~/components/ui/textarea";
-import { ProductCompositionModel } from "~/data-access/models/product-composition-model.server";
+import type { IngredientInfo } from "~/domain/ingredient/ingredient-info.model.server";
+import { IngredientInfoModel } from "~/domain/ingredient/ingredient-info.model.server";
+import type { IngredientPrice } from "~/domain/ingredient/ingredient-price.model.server";
+import { IngredientPriceModel } from "~/domain/ingredient/ingredient-price.model.server";
+import type { Ingredient } from "~/domain/ingredient/ingredient.model.server";
+import { IngredientModel } from "~/domain/ingredient/ingredient.model.server";
+import { ProductCompositionModel } from "~/domain/product/product-composition.model.server";
+import { SupplierModel } from "~/domain/supplier/supplier.model.server";
+import errorMessage from "~/utils/error-message";
+import { badRequest, ok } from "~/utils/http-response.server";
+import tryit from "~/utils/try-it";
+
 
 export const meta: V2_MetaFunction = () => {
     return [
@@ -53,7 +38,7 @@ export async function loader() {
     const ingredientsPrices = await IngredientPriceModel.findAll()
     const suppliers = await SupplierModel.findAll()
 
-    return json({ ingredients, ingredientsInfo, prices: ingredientsPrices, suppliers })
+    return ok({ ingredients, ingredientsInfo, prices: ingredientsPrices, suppliers })
 }
 
 export async function action({ request }: ActionArgs) {
@@ -290,6 +275,8 @@ export default function Index() {
 
 function IngredientList() {
     const loaderData = useLoaderData<typeof loader>()
+    const ingredients = loaderData?.payload.ingredients
+
     if (!loaderData.ingredients || loaderData.ingredients.length === 0) return null
 
     return (

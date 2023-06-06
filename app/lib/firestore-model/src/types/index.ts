@@ -1,4 +1,4 @@
-import type FirestoreModel from "../lib/firestore-model.server";
+import { type FirestoreModel } from "../lib/firestore-model.server";
 
 export type FirestoreDocumentId = string;
 export type FirestoreDocument = { [key: string]: any };

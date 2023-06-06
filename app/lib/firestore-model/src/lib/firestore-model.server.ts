@@ -1,7 +1,4 @@
-import type {
-  QueryNonFilterConstraint,
-  WhereFilterOp,
-} from "firebase/firestore";
+import type { WhereFilterOp } from "firebase/firestore";
 import {
   addDoc,
   collection,
@@ -15,16 +12,13 @@ import {
 } from "firebase/firestore";
 import type { FirestoreDocumentUpdateError } from "./firestore-errors.server";
 import { FirestoreDocumentDeletionError } from "./firestore-errors.server";
-import {
-  FirestoreDocumentCreationError,
-  FirestoreDocumentNotFound,
-} from "./firestore-errors.server";
+import { FirestoreDocumentCreationError } from "./firestore-errors.server";
 import type FirestoreClient from "./firestore-client.server";
 
 import type { FirestoreDocument } from "../types";
 import errorMessage from "../utils/error-message";
 
-type whereCompoundConditions = {
+export type whereCompoundConditions = {
   field: string;
   op: WhereFilterOp;
   value: any;
@@ -36,7 +30,7 @@ type whereCompoundConditions = {
  * @param {string} collectionName - The name of the collection
  *
  */
-export default class FirestoreModel<T> {
+export class FirestoreModel<T> {
   constructor(
     private _client: FirestoreClient,
     private _collectionName: string
@@ -84,7 +78,7 @@ export default class FirestoreModel<T> {
    * @param {string} documentId
    * @returns {object} - FirestoreDocumentResponse - {ok: boolean, payload: DocumentData | null, error: any}
    */
-  async findById(documentId: string): Promise<T | FirestoreDocumentNotFound> {
+  async findById(documentId: string): Promise<T | null> {
     const docRef = doc(
       this._client.connection,
       this._collectionName,
@@ -93,10 +87,10 @@ export default class FirestoreModel<T> {
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
-      return Object.assign(this, docSnap.data()) as T;
+      return Object.assign(this, { ...docSnap.data(), id: docSnap.id }) as T;
     }
 
-    return new FirestoreDocumentNotFound();
+    return null;
   }
 
   /**
@@ -271,10 +265,7 @@ export default class FirestoreModel<T> {
     return result as T[];
   }
 
-  async findWhereIn(
-    field: string,
-    values: any[]
-  ): Promise<T[] | FirestoreDocumentNotFound> {
+  async findWhereIn(field: string, values: any[]): Promise<T[] | null> {
     let result: FirestoreDocument[] = [];
 
     const querySnapshot = await getDocs(
@@ -293,9 +284,38 @@ export default class FirestoreModel<T> {
     return result as T[];
   }
 
-  async whereCompound(
-    conditions: whereCompoundConditions
-  ): Promise<T[] | FirestoreDocumentNotFound> {
+  /**
+   * Return the first document that match the query
+   *
+   * @param field  - The field to search
+   * @param operator  - The operator to use
+   * @param value  - The value to search
+   * @returns  - An array of documents
+   */
+  async findOne(
+    field: string,
+    operator: WhereFilterOp,
+    value: any
+  ): Promise<T> {
+    let result: FirestoreDocument[] = [];
+
+    const querySnapshot = await getDocs(
+      query(
+        collection(this._client.connection, this._collectionName),
+        where(field, operator, value)
+      )
+    );
+
+    querySnapshot.forEach((doc) => {
+      const data = { ...doc.data(), id: doc.id };
+
+      result.push(data);
+    });
+
+    return result[0] as T;
+  }
+
+  async whereCompound(conditions: whereCompoundConditions): Promise<T[] | []> {
     let result: FirestoreDocument[] = [];
 
     const queryFilters = conditions.map((condition) => {

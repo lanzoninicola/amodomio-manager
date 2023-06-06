@@ -4,7 +4,6 @@ import { Save, Trash2 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import Fieldset from "~/components/ui/fieldset";
 import { Input } from "~/components/ui/input";
-import { type ProductComposition, ProductCompositionModel } from "~/data-access/models/product-composition-model.server";
 import {
     Select,
     SelectContent,
@@ -15,14 +14,15 @@ import {
 } from "~/components/ui/select";
 import { useState } from "react";
 import uppercase from "~/utils/to-uppercase";
-import { json, type ActionArgs } from "@remix-run/node";
-import { badRequest, ok, serverError } from "~/lib/api-response";
-import errorMessage from "~/lib/error-message";
-import tryit from "~/lib/try-it";
-import { IngredientModel } from "~/data-access/models/ingredient-model.server";
-import { IngredientPriceModel } from "~/data-access/models/ingredient-price-model.server";
-import { ProductInfoModel } from "~/data-access/models/product-info-model.server";
-import { ProductModel } from "~/data-access/models/product-model.server";
+import { type ActionArgs } from "@remix-run/node";
+import { IngredientPriceModel } from "~/domain/ingredient/ingredient-price.model.server";
+import { IngredientModel } from "~/domain/ingredient/ingredient.model.server";
+import { ProductCompositionModel, type ProductComposition } from "~/domain/product/product-composition.model.server";
+import { ProductInfoModel } from "~/domain/product/product-info.model.server";
+import { ProductModel } from "~/domain/product/product.model.server";
+import errorMessage from "~/utils/error-message";
+import { serverError, badRequest, ok } from "~/utils/http-response.server";
+import tryit from "~/utils/try-it";
 
 export async function loader() {
 
@@ -76,7 +76,7 @@ export async function loader() {
             }
         }))
 
-    return json({
+    return ok({
         products,
         productsInfo,
         productsCompositions,

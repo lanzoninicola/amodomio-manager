@@ -1,5 +1,5 @@
-import { Form, useLoaderData, useNavigation, useSearchParams } from "@remix-run/react";
-import { Save } from "lucide-react";
+import { Form, useLoaderData, useNavigation, useOutletContext, useSearchParams } from "@remix-run/react";
+import { Loader, Save } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import Fieldset from "~/components/ui/fieldset";
 import { Input } from "~/components/ui/input";
@@ -7,12 +7,15 @@ import { Label } from "~/components/ui/label";
 
 import { Textarea } from "~/components/ui/textarea";
 import { Switch } from "~/components/ui/switch";
-import { type ProductInfo, ProductInfoModel } from "~/data-access/models/product-info-model.server";
 import { type ActionArgs } from "@remix-run/node";
-import { badRequest, ok } from "~/lib/api-response";
-import errorMessage from "~/lib/error-message";
-import tryit from "~/lib/try-it";
-
+import { ProductInfoModel, type ProductInfo } from "~/domain/product/product-info.model.server";
+import errorMessage from "~/utils/error-message";
+import { badRequest, ok } from "~/utils/http-response.server";
+import tryit from "~/utils/try-it";
+import { type ProductOutletContext } from "./admin.products.$productId";
+import { type ProductWithAssociations } from "~/domain/product/product.entity";
+import useFormSubmissionnState from "~/hooks/useFormSubmissionState";
+import SubmitButton from "~/components/primitives/submit-button/submit-button";
 
 
 export async function action({ request }: ActionArgs) {
@@ -63,54 +66,39 @@ export async function action({ request }: ActionArgs) {
 }
 
 export default function SingleProductInformation() {
-    let [searchParams, _] = useSearchParams();
-    const activeProductId = searchParams.get("id")
-    const navigation = useNavigation()
 
-    const loaderData = useLoaderData<typeof loader>()
-    // const productsInfo: ProductInfo[] = loaderData?.productsInfo
-    // const productInfo = productsInfo.find(p => p.productId === activeProductId)
-
-    // const formActionSubmission = productInfo?.id ? "product-info-update" : "product-info-create"
+    const context = useOutletContext<ProductOutletContext>()
+    const product = context.product as ProductWithAssociations
+    const productInfo = product.info
+    const formActionSubmission = productInfo?.id ? "product-info-update" : "product-info-create"
 
     return (
         <div className="p-4">
-            {/* <Form method="post" className="w-full">
+            <Form method="post" className="w-full">
                 <div className="mb-4">
-                    <Button type="submit" name="_action" value={formActionSubmission} disabled={navigation.state === "submitting" || navigation.state === "loading"} className="flex gap-2">
-                        <Save size={16} />
-                        Salvar
-                    </Button>
+                    <SubmitButton actionName={formActionSubmission} />
                 </div>
-                <Input type="hidden" name="id" defaultValue={productInfo?.id} />
-                <Input type="hidden" name="productId" defaultValue={activeProductId || undefined} />
+                <div className="border-2 border-muted rounded-lg px-4 py-8">
+                    <Input type="hidden" name="id" defaultValue={productInfo?.id} />
+                    <Input type="hidden" name="productId" defaultValue={product.id || undefined} />
 
-                <div className="mb-4 w-full">
-                    <Label htmlFor="description">Descrição produto</Label>
-                    <Textarea id="description" name="description" placeholder="Descrição" defaultValue={productInfo?.description} className="w-full" />
+                    <Fieldset>
+                        <div className="flex justify-between">
+                            <Label htmlFor="description">Descrição produto</Label>
+                            <Textarea id="description" name="description" placeholder="Descrição" defaultValue={productInfo?.description} className="max-w-[300px]" />
+                        </div>
+                    </Fieldset>
+                    <Fieldset>
+                        <div className="flex justify-between">
+                            <Label htmlFor="is-also-ingredient" className="text-sm">
+                                E' tamben um ingrediente
+                            </Label>
+                            <Switch id="is-also-ingredient" name="isAlsoAnIngredient" defaultChecked={productInfo?.isAlsoAnIngredient} />
+                        </div>
+                    </Fieldset>
                 </div>
-                <div className="grid grid-cols-2 gap-6 items-start">
-
-                    <div>
-                        <Fieldset>
-                            <div className="flex justify-between">
-                                <Label htmlFor="is-also-ingredient" className="text-sm">
-                                    E' tamben um ingrediente
-                                </Label>
-                                <Switch id="is-also-ingredient" name="isAlsoAnIngredient" defaultChecked={productInfo?.isAlsoAnIngredient} />
-                            </div>
-                        </Fieldset>
-                        <Fieldset>
-                            <div className="flex justify-between">
-                                <Label htmlFor="visible-on-menu" className="text-sm">
-                                    Mostrar no cardapio
-                                </Label>
-                                <Switch id="visible-on-menu" name="visibleOnMenu" defaultChecked={productInfo?.visibleOnMenu} />
-                            </div>
-                        </Fieldset>
-                    </div>
-                </div>
-            </Form> */}
+            </Form>
         </div>
     )
+
 }

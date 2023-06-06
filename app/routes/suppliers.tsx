@@ -1,7 +1,7 @@
-import type { ActionArgs, LoaderArgs, V2_MetaFunction } from "@remix-run/node";
+import type { ActionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
-import { MoreHorizontal, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import Container from "~/components/layout/container/container";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
@@ -9,7 +9,7 @@ import Fieldset from "~/components/ui/fieldset";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
-import { SupplierModel, type Supplier } from "~/data-access/models/supplier-model.server";
+import { type Supplier, SupplierModel } from "~/domain/supplier/supplier.model.server";
 
 export async function loader() {
     const suppliers = await SupplierModel.findAll()

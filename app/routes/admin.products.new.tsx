@@ -1,15 +1,15 @@
+import { Label } from "@radix-ui/react-label";
 import { type ActionArgs } from "@remix-run/node";
-import { Form, useNavigation } from "@remix-run/react";
+import { useNavigation, Form } from "@remix-run/react";
 import Container from "~/components/layout/container/container";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "~/components/ui/card";
 import Fieldset from "~/components/ui/fieldset";
 import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { ProductModel } from "~/data-access/models/product-model.server";
-import { badRequest, ok } from "~/lib/api-response";
-import errorMessage from "~/lib/error-message";
-import tryit from "~/lib/try-it";
+import { ProductModel } from "~/domain/product/product.model.server";
+import errorMessage from "~/utils/error-message";
+import { badRequest, ok } from "~/utils/http-response.server";
+import tryit from "~/utils/try-it";
 
 export async function action({ request }: ActionArgs) {
     let formData = await request.formData();
