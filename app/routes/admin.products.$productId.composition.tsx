@@ -201,8 +201,6 @@ function CompositionElementForm({ productCompositionId, productId, elementId, el
 
     const elementSelected: CompositionElement = elements.find(e => e.id === elementIdSelected)
 
-    console.log(elementSelected)
-
     return (
 
         <Form method="post" className="mb-2">

@@ -1,12 +1,14 @@
 import { Loader, Save } from "lucide-react";
+import type { ButtonProps } from "~/components/ui/button";
 import { Button } from "~/components/ui/button";
 import useFormSubmissionnState from "~/hooks/useFormSubmissionState";
 
 
-interface SubmitButtonProps {
+interface SubmitButtonProps extends ButtonProps {
     actionName: string,
     loadingText?: string,
     idleText?: string
+
 }
 
 export default function SubmitButton({ actionName, loadingText, idleText }: SubmitButtonProps) {

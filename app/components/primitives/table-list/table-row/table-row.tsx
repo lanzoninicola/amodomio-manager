@@ -7,6 +7,7 @@ interface TableRowProps {
   isProcessing?: boolean;
   clazzName?: string;
   dateColumnsCondensed?: boolean;
+  showDateColumns?: boolean;
 }
 
 export default function TableRow({
@@ -14,28 +15,32 @@ export default function TableRow({
   children,
   isProcessing,
   clazzName,
-  dateColumnsCondensed
+  dateColumnsCondensed,
+  showDateColumns = true,
 }: TableRowProps) {
+
+
+  const dateColumns = dateColumnsCondensed === true ? (
+    <TableDateColumnsCondensed
+      createdAt={row?.createdAt}
+      updatedAt={row?.updatedAt}
+    />
+  ) : (
+    <TableDateColumnsExpanded
+      createdAt={row?.createdAt}
+      updatedAt={row?.updatedAt}
+    />
+  )
+
+
   return (
     <li
       data-element="table-row"
       className={`${isProcessing ? "opacity-25" : ""
-        } cursor-pointer w-full grid  gap-x-4 p-2 mb-2 text-sm items-center hover:bg-gray-300 ${clazzName}`}
+        } cursor-pointer w-full grid gap-x-6 p-2 mb-2 text-sm items-center hover:bg-gray-300 ${clazzName}`}
     >
       {children}
-
-      {dateColumnsCondensed ? (
-        <TableDateColumnsCondensed
-          createdAt={row?.createdAt}
-          updatedAt={row?.updatedAt}
-        />
-      ) : (
-        <TableDateColumnsExpanded
-          createdAt={row?.createdAt}
-          updatedAt={row?.updatedAt}
-        />
-      )}
-
+      {showDateColumns === true && dateColumns}
     </li>
   );
 }

@@ -21,8 +21,6 @@ export async function action({ request }: ActionArgs) {
 
     if (_action === "product-menu-create") {
 
-        console.log(values)
-
         const [err, data] = await tryit(ProductMenuModel.add({
             productId: values.productId,
             show: values.show,

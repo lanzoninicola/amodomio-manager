@@ -8,10 +8,17 @@ import {
   type IngredientPrice,
 } from "./ingredient-price.model.server";
 import { type Ingredient, IngredientModel } from "./ingredient.model.server";
+import type { whereCompoundConditions } from "~/lib/firestore-model/src";
+import type { Supplier } from "../supplier/supplier.model.server";
+import { SupplierEntity } from "../supplier/supplier.entity.server";
+
+export interface IngredientPriceWithSupplier extends IngredientPrice {
+  supplier: Supplier | null;
+}
 
 export interface IngredientWithAssociations extends Ingredient {
   info: IngredientInfo | null;
-  prices: IngredientPrice[] | null;
+  prices: IngredientPriceWithSupplier[] | null;
 }
 
 export class IngredientEntity {
@@ -36,8 +43,6 @@ export class IngredientEntity {
   ): Promise<Ingredient | IngredientWithAssociations | null> {
     let ingredient = await IngredientModel.findById(id);
 
-    console.log(ingredient);
-
     if (!ingredient) {
       return null;
     }
@@ -46,19 +51,40 @@ export class IngredientEntity {
       return ingredient;
     }
 
-    const productWithAssociations: IngredientWithAssociations = {
+    const ingredientWithAssociations: IngredientWithAssociations = {
       ...ingredient,
       info: null,
       prices: null,
     };
-    productWithAssociations["info"] = await IngredientInfoModel.findOne(
-      "productId",
+
+    // add info
+    ingredientWithAssociations["info"] = await IngredientInfoModel.findOne(
+      "ingredientId",
       "==",
       id
     );
-    productWithAssociations["prices"] = await IngredientPriceModel.findAll();
 
-    return productWithAssociations;
+    // add prices
+    const prices = await IngredientPriceModel.findWhere(
+      "ingredientId",
+      "==",
+      id
+    );
+    const pricesWithSupplier = prices.map(async (price) => {
+      const supplierEntity = new SupplierEntity();
+      const supplier = await supplierEntity.findById(price.supplierId);
+
+      return {
+        ...price,
+        supplier,
+      };
+    });
+
+    ingredientWithAssociations["prices"] = await Promise.all(
+      pricesWithSupplier
+    );
+
+    return ingredientWithAssociations;
   }
 
   async addInfo(info: IngredientInfo): Promise<IngredientInfo> {
@@ -69,12 +95,32 @@ export class IngredientEntity {
     return await IngredientInfoModel.update(infoId, info);
   }
 
-  async getIngredientInfo(id: string) {
-    return await IngredientInfoModel.findById(id);
+  async findInfo(ingredientId: string) {
+    return await IngredientInfoModel.findById(ingredientId);
   }
 
-  async getIngredientPrices(id: string) {
-    return await IngredientPriceModel.findAll();
+  /**
+   * Find all prices for the ingredient
+   *
+   * @param ingredientId  The ingredient id
+   * @returns  {IngredientPrice[]} All prices for the ingredient
+   */
+  async findAllPrices(ingredientId: string) {
+    return await IngredientPriceModel.findWhere(
+      "ingredientId",
+      "==",
+      ingredientId
+    );
+  }
+
+  /**
+   * Find prices that match the conditions
+   *
+   * @param conditions  { field: string, operator: string, value: any }[]
+   * @returns {IngredientPrice[]} All prices that match the conditions
+   */
+  async findPrices(conditions: whereCompoundConditions) {
+    return await IngredientPriceModel.whereCompound(conditions);
   }
 
   async addPrice(price: IngredientPrice): Promise<IngredientPrice> {
@@ -83,6 +129,10 @@ export class IngredientEntity {
 
   async updatePrice(priceId: string, price: IngredientPrice) {
     return await IngredientPriceModel.update(priceId, price);
+  }
+
+  async deletePrice(priceId: string) {
+    return await IngredientPriceModel.delete(priceId);
   }
 
   validate(ingredient: Ingredient) {

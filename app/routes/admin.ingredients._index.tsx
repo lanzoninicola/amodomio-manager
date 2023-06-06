@@ -86,7 +86,7 @@ function IngredientTableRow({ ingredient, clazzName }: IngredientTableRowProps) 
                 </div>
                 <div>
                     <Input type="hidden" name="id" value={ingredient.id} />
-                    <Input name="id" defaultValue={ingredient.name} className="border-none w-full" />
+                    <Input name="name" defaultValue={ingredient.name} className="border-none w-full" />
                 </div>
 
             </TableRow>

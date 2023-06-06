@@ -2,7 +2,7 @@ import { json } from "@remix-run/node";
 
 type LoaderOrActionReturnType = Record<string, any> | undefined;
 
-interface HttpResponse {
+export interface HttpResponse {
   status: number;
   message?: string;
   payload?: any;

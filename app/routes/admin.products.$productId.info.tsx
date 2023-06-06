@@ -24,8 +24,6 @@ export async function action({ request }: ActionArgs) {
 
     if (_action === "product-info-create") {
 
-        console.log(values)
-
         const [err, data] = await tryit(ProductInfoModel.add({
             productId: values.productId,
             description: values.description,
