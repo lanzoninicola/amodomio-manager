@@ -11,17 +11,16 @@ import type { IngredientWithAssociations } from "~/domain/ingredient/ingredient.
 import { IngredientEntity } from "~/domain/ingredient/ingredient.entity";
 import type { IngredientOutletContext } from "./admin.ingredients.$ingredientId";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectItem } from "~/components/ui/select";
-import { Trash2, PinOff, Edit, TimerReset } from "lucide-react";
+import { Trash2, PinOff, Edit, TimerReset, Eraser } from "lucide-react";
 import { Button } from "~/components/ui/button";
-import type { IngredientPrice } from "~/domain/ingredient/ingredient-price.model.server";
 import { Switch } from "~/components/ui/switch";
 import { TableRow, TableTitles, Table } from "~/components/primitives/table-list";
 import useFormSubmissionnState from "~/hooks/useFormSubmissionState";
 import randomReactKey from "~/utils/random-react-key";
 import SubmitButton from "~/components/primitives/submit-button/submit-button";
-import { useState } from "react";
 import toNumber from "~/utils/to-number";
 import toFixedNumber from "~/utils/to-fixed-number";
+import FormPriceFields from "~/components/primitives/form-price-fields/form-price-fields";
 
 
 export async function action({ request }: ActionArgs) {
@@ -70,8 +69,6 @@ export async function action({ request }: ActionArgs) {
             defaultPrice: defaultPrice
         }))
 
-        console.log({ err, data })
-
         if (err) {
             return badRequest({ action: "ingredient-update-price", message: errorMessage(err) })
         }
@@ -117,94 +114,99 @@ function IngredientPriceEdit() {
 
     const suppliers = context.suppliers || []
 
-    const [quantity, setQuantity] = useState(ingredientPrice?.quantity || 1)
-    const [price, setPrice] = useState(ingredientPrice?.price || 0)
-
     const formActionSubmission = ingredientPrice?.id ? "ingredient-update-price" : "ingredient-add-price"
 
-    return (
-        <Form method="post" >
-            <div className="md:p-8 md:border-2 rounded-lg border-muted">
-                <div className="grid md:grid-cols-2 grid-cols-1 md:grid-rows-1 grid-rows-2 items-center md:gap-4">
-                    <div>
-                        <Input type="hidden" name="id" value={ingredientPrice?.id} />
-                        <Input type="hidden" name="ingredientId" value={ingredient.id} />
-                        <Fieldset>
-                            <Label htmlFor="supplierId">Forneçedor</Label>
-                            <Select name="supplierId" defaultValue={ingredientPrice?.supplierId} required >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Forneçedor" className="text-xs" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        {suppliers.map(supplier => (
-                                            supplier.id && <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>
-                                        ))}
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                        </Fieldset>
-                    </div>
+    let formTitle = null
 
-                    <div className="flex md:flex-row gap-2">
-                        <Fieldset >
-                            <Label htmlFor="unit">Unidade</Label>
-                            <div className="max-w-[100px]">
-                                <Select name="unit" defaultValue={ingredientPrice?.unit || "gr"} required>
+    if (formActionSubmission === "ingredient-add-price") {
+        formTitle = "Novo preço"
+    }
+
+    if (formActionSubmission === "ingredient-update-price") {
+        formTitle = `Atualizar preço com ID: ${ingredientPrice?.id}`
+    }
+
+    console.log({ suppliers, ingredientPrice })
+
+    return (
+        <div className="md:p-8 md:border-2 rounded-lg border-muted">
+            <div className="flex flex-col gap-4">
+                <h3 className="font-semibold">{formTitle}</h3>
+                <Form method="post" >
+
+                    <div className="grid md:grid-cols-2 grid-cols-1 md:grid-rows-1 grid-rows-2 items-center md:gap-4">
+                        <div>
+                            <Input type="hidden" name="id" defaultValue={ingredientPrice?.id} />
+                            <Input type="hidden" name="ingredientId" defaultValue={ingredient.id} />
+                            <Fieldset>
+                                <Label htmlFor="supplierId">Forneçedor</Label>
+                                <Select name="supplierId" defaultValue={ingredientPrice?.supplierId} required >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Unidade" />
+                                        <SelectValue placeholder="Forneçedor" className="text-xs" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectGroup >
-                                            <SelectItem value="gr">GR</SelectItem>
-                                            <SelectItem value="un">UN</SelectItem>
+                                        <SelectGroup>
+                                            {suppliers.map(supplier => (
+                                                supplier.id && <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>
+                                            ))}
                                         </SelectGroup>
                                     </SelectContent>
                                 </Select>
-                            </div>
-                        </Fieldset>
-                        <Fieldset >
-                            <Label htmlFor="quantity">Quantitade</Label>
-                            <Input id="quantity" name="quantity" defaultValue={ingredientPrice?.quantity} className="max-w-[100px]" autoComplete="off" required
-                                onChange={(e) => setQuantity(Number(e.target.value))}
+                            </Fieldset>
+                        </div>
+
+                        <div className="flex md:flex-row gap-2">
+                            <Fieldset >
+                                <Label htmlFor="unit">Unidade</Label>
+                                <div className="max-w-[100px]">
+                                    <Select name="unit" defaultValue={ingredientPrice?.unit || "gr"} required>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Unidade" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup >
+                                                <SelectItem value="gr">GR</SelectItem>
+                                                <SelectItem value="un">UN</SelectItem>
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </Fieldset>
+                            <FormPriceFields
+                                quantity={ingredientPrice?.quantity}
+                                unitPrice={ingredientPrice?.unitPrice}
+                                price={ingredientPrice?.price}
                             />
-                        </Fieldset>
-                        <Fieldset >
-                            <Label htmlFor="unit-price">Preço unitário</Label>
-                            <Input id="unit-price" name="unitPrice" readOnly value={ingredientPrice?.unitPrice || Number(price / quantity).toFixed(2)}
-                                className="max-w-[100px] border-none w-full text-right text-muted-foreground" tabIndex={-1} autoComplete="off" required />
-                        </Fieldset>
-                        <Fieldset >
-                            <Label htmlFor="price">Preço</Label>
-                            <Input id="price" name="price" defaultValue={ingredientPrice?.price} className="max-w-[100px]" autoComplete="off"
-                                onChange={(e) => setPrice(Number(e.target.value))}
-                            />
-                        </Fieldset>
+                        </div>
+
+                    </div>
+                    <Fieldset >
+                        <div className="flex gap-16 items-center">
+                            <Label htmlFor="default-price">Preço padrão</Label>
+                            <Switch id="default-price" name="defaultPrice" checked={ingredientPrice?.defaultPrice} />
+                        </div>
+                    </Fieldset>
+                    <div className="w-full flex gap-4 justify-end">
+                        <Link to={`/admin/ingredients/${ingredient.id}/prices`}>
+                            <Button type="button" variant={"outline"} size={"lg"} className="flex gap-4">
+                                <Eraser size={16} />
+                                Limpar
+                            </Button>
+                        </Link>
+                        <SubmitButton actionName={formActionSubmission} size={"lg"} className="w-full md:max-w-[150px] gap-2" />
                     </div>
 
-                </div>
-                <Fieldset >
-                    <div className="flex gap-16 items-center">
-                        <Label htmlFor="default-price">Preço padrão</Label>
-                        <Switch id="default-price" name="defaultPrice" defaultChecked={ingredientPrice?.defaultPrice === true ? true : false} />
-                    </div>
-                </Fieldset>
-                <div className="w-full flex gap-4 justify-end">
-                    <Link to={`/admin/ingredients/${ingredient.id}/prices`}>
-                        <Button type="button" variant={"outline"} size={"lg"} className="flex gap-4">
-                            <TimerReset size={16} />
-                            Limpar
-                        </Button>
-                    </Link>
-                    <SubmitButton actionName={formActionSubmission} size={"lg"} className="w-full md:max-w-[150px] gap-2" />
-                </div>
+
+                </Form>
             </div>
-
-        </Form>
+        </div>
 
     )
 
 }
+
+
+
 
 
 function IngredientPriceList() {
@@ -284,6 +286,4 @@ function IngredientPriceList() {
     )
 
 }
-
-
 

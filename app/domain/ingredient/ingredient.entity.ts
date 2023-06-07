@@ -134,10 +134,13 @@ export class IngredientEntity {
     await this.validatePriceMutation(ingredientPrice);
 
     if (!priceId) {
-      return badRequest({
-        action: "ingredient-update-price",
-        message: "Não foi possivel identificar o registro da atualizar",
-      });
+      badRequest(
+        {
+          action: "ingredient-update-price",
+          message: "Não foi possivel identificar o registro da atualizar",
+        },
+        { throwIt: true }
+      );
     }
 
     return await IngredientPriceModel.update(priceId, ingredientPrice);
@@ -149,37 +152,34 @@ export class IngredientEntity {
 
   validate(ingredient: Ingredient) {
     if (!ingredient.name) {
-      serverError("O nome do ingrediente é obrigatório");
+      serverError("O nome do ingrediente é obrigatório", { throwIt: true });
     }
   }
 
   async validatePriceMutation(ingredientPrice: IngredientPrice) {
-    console.log(
-      { ingredientPrice },
-      isNumber(ingredientPrice.quantity),
-      ingredientPrice.quantity
-    );
-
     if (isNumber(ingredientPrice.price) === false) {
-      return badRequest({
-        message: "O preço do ingrediente deve ser um número",
-      });
+      badRequest(
+        { message: "O preço do ingrediente deve ser um número" },
+        { throwIt: true }
+      );
     }
 
     if (isNumber(ingredientPrice.quantity) === false) {
-      return badRequest({ message: "A quantitade deve ser um número" });
+      badRequest(
+        { message: "A quantitade deve ser um número" },
+        { throwIt: true }
+      );
     }
 
     if (ingredientPrice.price === 0 || ingredientPrice.price === null) {
-      serverError({
-        message: "O preço do ingrediente não pode ser zero",
-      });
+      badRequest("O preço do ingrediente não pode ser zero", { throwIt: true });
     }
 
     if (ingredientPrice.quantity === 0) {
-      return badRequest({
-        message: "A quantidade do ingrediente não pode ser zero",
-      });
+      badRequest(
+        { message: "A quantidade do ingrediente não pode ser zero" },
+        { throwIt: true }
+      );
     }
 
     const defaultPriceExists = (await this.findPrices([
@@ -188,10 +188,13 @@ export class IngredientEntity {
     ])) as IngredientPrice[];
 
     if (defaultPriceExists.length >= 1) {
-      return badRequest({
-        action: "ingredient-update-price",
-        message: "Já existe um preço padrão para este ingrediente",
-      });
+      badRequest(
+        {
+          action: "ingredient-update-price",
+          message: "Já existe um preço padrão para este ingrediente",
+        },
+        { throwIt: true }
+      );
     }
   }
 }
