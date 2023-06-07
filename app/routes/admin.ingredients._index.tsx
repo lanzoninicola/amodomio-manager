@@ -1,6 +1,7 @@
 import { useLoaderData, Form, Link } from "@remix-run/react"
-import { MoreHorizontal, PinOff } from "lucide-react"
+import { Edit, MoreHorizontal, PinOff } from "lucide-react"
 import Container from "~/components/layout/container/container"
+import SubmitButton from "~/components/primitives/submit-button/submit-button"
 import { TableTitles, TableRows, TableRow, Table } from "~/components/primitives/table-list"
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
@@ -73,14 +74,14 @@ function IngredientTableRow({ ingredient, clazzName }: IngredientTableRowProps) 
                 isProcessing={formSubmissionState === "inProgress"}
                 clazzName={`${clazzName}`}
             >
-                <div className="flex gap-2 md:gap-4 mb-2">
+                <div className="flex gap-2 md:gap-4 items-center">
                     <Link to={`/admin/ingredients/${ingredient.id}/info`}>
-                        <Button type="button" >
-                            <MoreHorizontal size={16} />
+                        <Button type="button" variant="outline" className="border-black" size={"sm"}>
+                            <Edit size={16} />
                         </Button>
                     </Link>
-                    <Button variant="destructive" type="submit" name="_action" value="ingredient-disable">
-                        <PinOff size={16} />
+                    <Button variant="outline" type="submit" name="_action" value="ingredient-disable" className="border-red-500" size={"sm"}>
+                        <PinOff size={16} color="red" />
                     </Button>
 
                 </div>

@@ -1,4 +1,4 @@
-import { serverError } from "~/utils/http-response.server";
+import { badRequest, serverError } from "~/utils/http-response.server";
 import {
   IngredientInfoModel,
   type IngredientInfo,
@@ -11,6 +11,7 @@ import { type Ingredient, IngredientModel } from "./ingredient.model.server";
 import type { whereCompoundConditions } from "~/lib/firestore-model/src";
 import type { Supplier } from "../supplier/supplier.model.server";
 import { SupplierEntity } from "../supplier/supplier.entity.server";
+import isNumber from "~/utils/is-number";
 
 export interface IngredientPriceWithSupplier extends IngredientPrice {
   supplier: Supplier | null;
@@ -123,12 +124,23 @@ export class IngredientEntity {
     return await IngredientPriceModel.whereCompound(conditions);
   }
 
-  async addPrice(price: IngredientPrice): Promise<IngredientPrice> {
-    return await IngredientPriceModel.add(price);
+  async addPrice(ingredientPrice: IngredientPrice): Promise<IngredientPrice> {
+    await this.validatePriceMutation(ingredientPrice);
+
+    return await IngredientPriceModel.add(ingredientPrice);
   }
 
-  async updatePrice(priceId: string, price: IngredientPrice) {
-    return await IngredientPriceModel.update(priceId, price);
+  async updatePrice(priceId: string, ingredientPrice: IngredientPrice) {
+    await this.validatePriceMutation(ingredientPrice);
+
+    if (!priceId) {
+      return badRequest({
+        action: "ingredient-update-price",
+        message: "Não foi possivel identificar o registro da atualizar",
+      });
+    }
+
+    return await IngredientPriceModel.update(priceId, ingredientPrice);
   }
 
   async deletePrice(priceId: string) {
@@ -138,6 +150,48 @@ export class IngredientEntity {
   validate(ingredient: Ingredient) {
     if (!ingredient.name) {
       serverError("O nome do ingrediente é obrigatório");
+    }
+  }
+
+  async validatePriceMutation(ingredientPrice: IngredientPrice) {
+    console.log(
+      { ingredientPrice },
+      isNumber(ingredientPrice.quantity),
+      ingredientPrice.quantity
+    );
+
+    if (isNumber(ingredientPrice.price) === false) {
+      return badRequest({
+        message: "O preço do ingrediente deve ser um número",
+      });
+    }
+
+    if (isNumber(ingredientPrice.quantity) === false) {
+      return badRequest({ message: "A quantitade deve ser um número" });
+    }
+
+    if (ingredientPrice.price === 0 || ingredientPrice.price === null) {
+      serverError({
+        message: "O preço do ingrediente não pode ser zero",
+      });
+    }
+
+    if (ingredientPrice.quantity === 0) {
+      return badRequest({
+        message: "A quantidade do ingrediente não pode ser zero",
+      });
+    }
+
+    const defaultPriceExists = (await this.findPrices([
+      { field: "ingredientId", op: "==", value: ingredientPrice.ingredientId },
+      { field: "defaultPrice", op: "==", value: true },
+    ])) as IngredientPrice[];
+
+    if (defaultPriceExists.length >= 1) {
+      return badRequest({
+        action: "ingredient-update-price",
+        message: "Já existe um preço padrão para este ingrediente",
+      });
     }
   }
 }

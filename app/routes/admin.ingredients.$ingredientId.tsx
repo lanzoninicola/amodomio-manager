@@ -1,5 +1,6 @@
 import type { LoaderArgs } from "@remix-run/node";
 import { Link, Outlet, useLoaderData, useLocation } from "@remix-run/react";
+import Container from "~/components/layout/container/container";
 import { IngredientEntity, type IngredientWithAssociations } from "~/domain/ingredient/ingredient.entity";
 import { type Ingredient } from "~/domain/ingredient/ingredient.model.server";
 import { SupplierEntity } from "~/domain/supplier/supplier.entity.server";
@@ -45,7 +46,7 @@ export default function SingleIngredient() {
     const activeTabStyle = "bg-primary text-white rounded-md py-1"
 
     return (
-        <>
+        <Container>
             <div className="mb-8">
                 <h3 className="text-xl font-semibold text-muted-foreground mb-3">{`Ingrediente: ${ingredient?.name}` || "Produto singolo"}</h3>
             </div>
@@ -77,6 +78,6 @@ export default function SingleIngredient() {
             </div >
 
             <Outlet context={{ ingredient, suppliers }} />
-        </>
+        </Container>
     )
 }

@@ -10,7 +10,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import type { FirestoreDocumentUpdateError } from "./firestore-errors.server";
+import { FirestoreDocumentUpdateError } from "./firestore-errors.server";
 import { FirestoreDocumentDeletionError } from "./firestore-errors.server";
 import { FirestoreDocumentCreationError } from "./firestore-errors.server";
 import type FirestoreClient from "./firestore-client.server";
@@ -152,7 +152,7 @@ export class FirestoreModel<T> {
 
       return true;
     } catch (e) {
-      throw new FirestoreDocumentCreationError(errorMessage(e));
+      throw new FirestoreDocumentUpdateError(errorMessage(e));
     }
   }
 

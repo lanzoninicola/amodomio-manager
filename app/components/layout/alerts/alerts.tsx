@@ -43,14 +43,14 @@ function AlertWrapper({ children, timeout, clazzName, buttonClazzName }: AlertWr
 
 }
 
-interface AlertErrorProps {
+interface AlertProps {
     title?: string
     message?: string
-    condition: boolean
+    condition?: boolean
     timeout?: number
 }
 
-export function AlertError({ condition, title, message, timeout }: AlertErrorProps) {
+export function AlertError({ condition, title, message, timeout }: AlertProps) {
 
     // using randomReactKey to force the component to re-render
 
@@ -61,10 +61,32 @@ export function AlertError({ condition, title, message, timeout }: AlertErrorPro
             <Alert className="bg-red-500 border-red-500">
                 <div className="flex gap-2 mb-2 items-center">
                     <AlertCircle className="h-4 w-4" color="white" />
-                    <AlertTitle className="text-white font-semibold text-lg mb-0">{`Erro: ${title}` || "Erro"}</AlertTitle>
+                    <AlertTitle className="text-white font-semibold text-lg mb-0">{title || "Erro"}</AlertTitle>
                 </div>
                 <AlertDescription className="text-white">
                     {message || "Um erro ocorreu, tente novamente mais tarde."}
+                </AlertDescription>
+            </Alert>
+        </AlertWrapper>
+    )
+}
+
+
+export function AlertOk({ condition, title, message, timeout }: AlertProps) {
+
+    // using randomReactKey to force the component to re-render
+
+    if (condition === false) return null
+
+    return (
+        <AlertWrapper key={randomReactKey()} timeout={timeout} clazzName="bg-green-500" >
+            <Alert className="bg-green-500 border-green-500">
+                <div className="flex gap-2 mb-2 items-center">
+                    <AlertCircle className="h-4 w-4" color="white" />
+                    <AlertTitle className="text-white font-semibold text-lg mb-0">{title || "Ok"}</AlertTitle>
+                </div>
+                <AlertDescription className="text-white">
+                    {message || "Operação realizada com sucesso."}
                 </AlertDescription>
             </Alert>
         </AlertWrapper>

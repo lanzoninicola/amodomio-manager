@@ -5,10 +5,9 @@ interface ContainerProps {
     clazzName?: string
 }
 
-function Container({ children, clazzName }: ContainerProps) {
-    return <div className={`md:max-w-[1024px] m-auto ${clazzName} p-4`}>
+export default function Container({ children, clazzName }: ContainerProps) {
+    return <div className={`md:max-w-[1024px] m-auto ${clazzName} p-4 lg:p-0`} data-element="container">
         {children}
     </div>
 }
 
-export default Container;

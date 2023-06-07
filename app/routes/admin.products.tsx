@@ -12,7 +12,7 @@ export default function ProductsOutlet() {
                 <h1 className="text-2xl font-bold">
                     Produtos
                 </h1>
-                <Link to={`?action=new`}>
+                <Link to={`/admin/products/new`}>
                     <Button type="button" className="flex gap-2">
                         <Plus size={16} />
                         Novo Produto

@@ -49,7 +49,7 @@ export default function Index() {
 
     return (
         <Container clazzName={"mb-8"}>
-            <div className="flex flex-col p-8">
+            <div className="flex flex-col p-4">
                 <h1 className="text-2xl font-bold mb-4">
                     Fornecedores
                 </h1>
