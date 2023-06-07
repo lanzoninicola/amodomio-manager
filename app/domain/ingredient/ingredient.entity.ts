@@ -182,19 +182,25 @@ export class IngredientEntity {
       );
     }
 
-    const defaultPriceExists = (await this.findPrices([
-      { field: "ingredientId", op: "==", value: ingredientPrice.ingredientId },
-      { field: "defaultPrice", op: "==", value: true },
-    ])) as IngredientPrice[];
-
-    if (defaultPriceExists.length >= 1) {
-      badRequest(
+    if (ingredientPrice.defaultPrice === true) {
+      const defaultPriceExists = (await this.findPrices([
         {
-          action: "ingredient-update-price",
-          message: "Já existe um preço padrão para este ingrediente",
+          field: "ingredientId",
+          op: "==",
+          value: ingredientPrice.ingredientId,
         },
-        { throwIt: true }
-      );
+        { field: "defaultPrice", op: "==", value: true },
+      ])) as IngredientPrice[];
+
+      if (defaultPriceExists.length >= 1) {
+        badRequest(
+          {
+            action: "ingredient-update-price",
+            message: "Já existe um preço padrão para este ingrediente",
+          },
+          { throwIt: true }
+        );
+      }
     }
   }
 }

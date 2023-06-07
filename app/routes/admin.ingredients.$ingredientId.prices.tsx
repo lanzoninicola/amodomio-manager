@@ -11,7 +11,7 @@ import type { IngredientWithAssociations } from "~/domain/ingredient/ingredient.
 import { IngredientEntity } from "~/domain/ingredient/ingredient.entity";
 import type { IngredientOutletContext } from "./admin.ingredients.$ingredientId";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectItem } from "~/components/ui/select";
-import { Trash2, PinOff, Edit, TimerReset, Eraser } from "lucide-react";
+import { Trash2, PinOff, Edit, Eraser } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Switch } from "~/components/ui/switch";
 import { TableRow, TableTitles, Table } from "~/components/primitives/table-list";
@@ -20,7 +20,6 @@ import randomReactKey from "~/utils/random-react-key";
 import SubmitButton from "~/components/primitives/submit-button/submit-button";
 import toNumber from "~/utils/to-number";
 import toFixedNumber from "~/utils/to-fixed-number";
-import FormPriceFields from "~/components/primitives/form-price-fields/form-price-fields";
 
 
 export async function action({ request }: ActionArgs) {
@@ -126,7 +125,7 @@ function IngredientPriceEdit() {
         formTitle = `Atualizar preço com ID: ${ingredientPrice?.id}`
     }
 
-    console.log({ suppliers, ingredientPrice })
+    const derivedUnitPrice = (ingredientPrice?.price || 0) / (ingredientPrice?.quantity || 1)
 
     return (
         <div className="md:p-8 md:border-2 rounded-lg border-muted">
@@ -172,18 +171,26 @@ function IngredientPriceEdit() {
                                     </Select>
                                 </div>
                             </Fieldset>
-                            <FormPriceFields
-                                quantity={ingredientPrice?.quantity}
-                                unitPrice={ingredientPrice?.unitPrice}
-                                price={ingredientPrice?.price}
-                            />
+                            <Fieldset >
+                                <Label htmlFor="quantity">Quantitade</Label>
+                                <Input id="quantity" name="quantity" defaultValue={ingredientPrice?.quantity || 1} className="max-w-[100px]" autoComplete="off" required />
+                            </Fieldset>
+                            <Fieldset >
+                                <Label htmlFor="unit-price">Preço unitário</Label>
+                                <Input id="unit-price" name="unitPrice" readOnly defaultValue={ingredientPrice?.unitPrice || derivedUnitPrice}
+                                    className="max-w-[100px] border-none w-full text-right text-muted-foreground" tabIndex={-1} autoComplete="off" />
+                            </Fieldset>
+                            <Fieldset >
+                                <Label htmlFor="price">Preço</Label>
+                                <Input id="price" name="price" defaultValue={ingredientPrice?.price || 1} className="max-w-[100px]" autoComplete="off" />
+                            </Fieldset>
                         </div>
 
                     </div>
                     <Fieldset >
                         <div className="flex gap-16 items-center">
                             <Label htmlFor="default-price">Preço padrão</Label>
-                            <Switch id="default-price" name="defaultPrice" checked={ingredientPrice?.defaultPrice} />
+                            <Switch id="default-price" name="defaultPrice" defaultChecked={ingredientPrice?.defaultPrice} />
                         </div>
                     </Fieldset>
                     <div className="w-full flex gap-4 justify-end">
