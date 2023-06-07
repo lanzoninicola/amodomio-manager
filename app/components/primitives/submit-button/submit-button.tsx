@@ -13,10 +13,15 @@ interface SubmitButtonProps extends ButtonProps {
 export default function SubmitButton({ actionName, loadingText, idleText, ...props }: SubmitButtonProps) {
 
     const formSubmissionState = useFormSubmissionnState()
-    const formSubmissionInProgress = formSubmissionState === "inProgress"
+    let formSubmissionInProgress = formSubmissionState === "inProgress"
 
     const loadingTextToDisplay = loadingText || "Salvando..."
     const idleTextToDisplay = idleText || "Salvar"
+
+    if (props.disabled) {
+        formSubmissionInProgress = formSubmissionInProgress && props.disabled
+    }
+
 
     return (
         <Button type="submit" name="_action" value={actionName} disabled={formSubmissionInProgress} className={`flex gap-2 ${props.className}`} {...props}>

@@ -12,6 +12,8 @@ import type { whereCompoundConditions } from "~/lib/firestore-model/src";
 import type { Supplier } from "../supplier/supplier.model.server";
 import { SupplierEntity } from "../supplier/supplier.entity.server";
 import isNumber from "~/utils/is-number";
+import type { IngredientMenuInfo } from "./ingredient-menu-info.model.server";
+import { IngredientMenuInfoModel } from "./ingredient-menu-info.model.server";
 
 export interface IngredientPriceWithSupplier extends IngredientPrice {
   supplier: Supplier | null;
@@ -20,6 +22,7 @@ export interface IngredientPriceWithSupplier extends IngredientPrice {
 export interface IngredientWithAssociations extends Ingredient {
   info: IngredientInfo | null;
   prices: IngredientPriceWithSupplier[] | null;
+  menuInfo: IngredientMenuInfo | null;
 }
 
 export class IngredientEntity {
@@ -56,6 +59,7 @@ export class IngredientEntity {
       ...ingredient,
       info: null,
       prices: null,
+      menuInfo: null,
     };
 
     // add info
@@ -84,6 +88,10 @@ export class IngredientEntity {
     ingredientWithAssociations["prices"] = await Promise.all(
       pricesWithSupplier
     );
+
+    // add menu info
+    ingredientWithAssociations["menuInfo"] =
+      await IngredientMenuInfoModel.findOne("ingredientId", "==", id);
 
     return ingredientWithAssociations;
   }
@@ -131,7 +139,10 @@ export class IngredientEntity {
   }
 
   async updatePrice(priceId: string, ingredientPrice: IngredientPrice) {
-    await this.validatePriceMutation(ingredientPrice);
+    await this.validatePriceMutation({
+      id: priceId,
+      ...ingredientPrice,
+    });
 
     if (!priceId) {
       badRequest(
@@ -148,6 +159,22 @@ export class IngredientEntity {
 
   async deletePrice(priceId: string) {
     return await IngredientPriceModel.delete(priceId);
+  }
+
+  async addMenuInfo(menuInfo: IngredientMenuInfo): Promise<IngredientInfo> {
+    return await IngredientMenuInfoModel.add(menuInfo);
+  }
+
+  async findMenuInfo(ingredientId: string) {
+    return await IngredientMenuInfoModel.findOne(
+      "ingredientId",
+      "==",
+      ingredientId
+    );
+  }
+
+  async updateMenuInfo(ingredientId: string, menuInfo: IngredientMenuInfo) {
+    return await IngredientMenuInfoModel.update(ingredientId, menuInfo);
   }
 
   validate(ingredient: Ingredient) {
@@ -183,16 +210,24 @@ export class IngredientEntity {
     }
 
     if (ingredientPrice.defaultPrice === true) {
-      const defaultPriceExists = (await this.findPrices([
+      let conditions: whereCompoundConditions = [
         {
           field: "ingredientId",
           op: "==",
           value: ingredientPrice.ingredientId,
         },
         { field: "defaultPrice", op: "==", value: true },
-      ])) as IngredientPrice[];
+      ];
 
-      if (defaultPriceExists.length >= 1) {
+      if (ingredientPrice.id) {
+        conditions.push({ field: "id", op: "!=", value: ingredientPrice.id });
+      }
+
+      const defaultPriceRecordsExists = (await this.findPrices(
+        conditions
+      )) as IngredientPrice[];
+
+      if (defaultPriceRecordsExists.length >= 1) {
         badRequest(
           {
             action: "ingredient-update-price",

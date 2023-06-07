@@ -2,6 +2,7 @@ import { AlertCircle, XCircle } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
 import { Button } from "~/components/ui/button"
+import { useToast } from "~/components/ui/use-toast"
 import randomReactKey from "~/utils/random-react-key"
 
 
@@ -46,49 +47,41 @@ function AlertWrapper({ children, timeout, clazzName, buttonClazzName }: AlertWr
 interface AlertProps {
     title?: string
     message?: string
-    condition?: boolean
     timeout?: number
 }
 
-export function AlertError({ condition, title, message, timeout }: AlertProps) {
+export function AlertError({ title, message, timeout }: AlertProps) {
 
-    // using randomReactKey to force the component to re-render
+    const { toast } = useToast()
 
-    if (condition === false) return null
+    useEffect(() => {
+        toast({
+            variant: "destructive",
+            title: title || "Erro",
+            description: message || "Um erro ocorreu, tente novamente mais tarde.",
+            duration: timeout || 5000,
+        })
 
-    return (
-        <AlertWrapper key={randomReactKey()} timeout={timeout} clazzName="bg-red-500" >
-            <Alert className="bg-red-500 border-red-500">
-                <div className="flex gap-2 mb-2 items-center">
-                    <AlertCircle className="h-4 w-4" color="white" />
-                    <AlertTitle className="text-white font-semibold text-lg mb-0">{title || "Erro"}</AlertTitle>
-                </div>
-                <AlertDescription className="text-white">
-                    {message || "Um erro ocorreu, tente novamente mais tarde."}
-                </AlertDescription>
-            </Alert>
-        </AlertWrapper>
-    )
+    }, [message, timeout, title, toast])
+
+    return null
 }
 
 
-export function AlertOk({ condition, title, message, timeout }: AlertProps) {
+export function AlertOk({ title, message, timeout }: AlertProps) {
 
-    // using randomReactKey to force the component to re-render
+    const { toast } = useToast()
 
-    if (condition === false) return null
+    useEffect(() => {
+        toast({
+            title: title || "Ok",
+            description: message || "Operação realizada com sucesso.",
+            duration: timeout || 5000,
+        })
 
-    return (
-        <AlertWrapper key={randomReactKey()} timeout={timeout} clazzName="bg-green-500" >
-            <Alert className="bg-green-500 border-green-500">
-                <div className="flex gap-2 mb-2 items-center">
-                    <AlertCircle className="h-4 w-4" color="white" />
-                    <AlertTitle className="text-white font-semibold text-lg mb-0">{title || "Ok"}</AlertTitle>
-                </div>
-                <AlertDescription className="text-white">
-                    {message || "Operação realizada com sucesso."}
-                </AlertDescription>
-            </Alert>
-        </AlertWrapper>
-    )
+    }, [message, timeout, title, toast])
+
+    return null
+
+
 }

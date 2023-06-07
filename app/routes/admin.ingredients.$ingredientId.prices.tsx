@@ -11,7 +11,7 @@ import type { IngredientWithAssociations } from "~/domain/ingredient/ingredient.
 import { IngredientEntity } from "~/domain/ingredient/ingredient.entity";
 import type { IngredientOutletContext } from "./admin.ingredients.$ingredientId";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectItem } from "~/components/ui/select";
-import { Trash2, PinOff, Edit, Eraser } from "lucide-react";
+import { Trash2, PinOff, Edit, Eraser, Bird, PlusIcon, PlusSquare } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Switch } from "~/components/ui/switch";
 import { TableRow, TableTitles, Table } from "~/components/primitives/table-list";
@@ -115,13 +115,19 @@ function IngredientPriceEdit() {
 
     const formActionSubmission = ingredientPrice?.id ? "ingredient-update-price" : "ingredient-add-price"
 
-    let formTitle = null
+    let formTitle
+    let submitButtonText
+    let submitButtonLoadingText
 
     if (formActionSubmission === "ingredient-add-price") {
+        submitButtonText = "Salvar"
+        submitButtonLoadingText = "Salvando..."
         formTitle = "Novo preço"
     }
 
     if (formActionSubmission === "ingredient-update-price") {
+        submitButtonText = "Atualizar"
+        submitButtonLoadingText = "Atualizando..."
         formTitle = `Atualizar preço com ID: ${ingredientPrice?.id}`
     }
 
@@ -196,11 +202,14 @@ function IngredientPriceEdit() {
                     <div className="w-full flex gap-4 justify-end">
                         <Link to={`/admin/ingredients/${ingredient.id}/prices`}>
                             <Button type="button" variant={"outline"} size={"lg"} className="flex gap-4">
-                                <Eraser size={16} />
-                                Limpar
+                                <PlusSquare size={16} />
+                                Novo preço
                             </Button>
                         </Link>
-                        <SubmitButton actionName={formActionSubmission} size={"lg"} className="w-full md:max-w-[150px] gap-2" />
+                        <SubmitButton actionName={formActionSubmission} size={"lg"} className="w-full md:max-w-[150px] gap-2"
+                            idleText={submitButtonText}
+                            loadingText={submitButtonLoadingText}
+                        />
                     </div>
 
 
@@ -226,10 +235,10 @@ function IngredientPriceList() {
 
     if (ingredientPrices.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center h-full">
-                <div className="flex flex-col items-center justify-center">
-                    <PinOff size={64} />
-                    <p className="text-2xl font-semibold text-gray-500">Nenhum preço cadastrado</p>
+            <div className="grid place-items-center m-4">
+                <div className="flex flex-col items-center justify-center gap-4">
+                    <Bird size={64} className="hover:rotate-6" />
+                    <p className="text-xl font-normal text-gray-500">Nenhum preço cadastrado</p>
                 </div>
             </div>
         )
