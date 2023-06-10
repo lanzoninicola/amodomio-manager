@@ -1,12 +1,15 @@
 import type { LoaderArgs } from "@remix-run/node";
-import { Link, Outlet, useLoaderData, useLocation, useParams } from "@remix-run/react";
-import { ProductEntity, type ProductWithAssociations } from "~/domain/product/product.entity";
+import { Link, Outlet, useLoaderData, useLocation } from "@remix-run/react";
+import { type ProductComposition } from "~/domain/product/product-composition.model.server";
+import { type ProductCompositionWithAssociations, ProductEntity, type ProductWithAssociations } from "~/domain/product/product.entity";
 import { type Product } from "~/domain/product/product.model.server";
+import type { HttpResponse } from "~/utils/http-response.server";
 import { badRequest, ok } from "~/utils/http-response.server";
 import { lastUrlSegment, urlAt } from "~/utils/url";
 
 export interface ProductOutletContext {
     product: ProductWithAssociations | Product | null
+    composition: ProductCompositionWithAssociations[] | ProductComposition[] | null
 }
 
 
@@ -15,8 +18,8 @@ export async function loader({ request }: LoaderArgs) {
 
     if (!productId) {
         return null
-
     }
+
     const productEntity = new ProductEntity()
     const product = await productEntity.findById(productId) as ProductWithAssociations
 
@@ -24,15 +27,22 @@ export async function loader({ request }: LoaderArgs) {
         return badRequest({ message: "Produto não encontrado" })
     }
 
-    return ok({ product })
+    let composition = null
+
+    if (product?.id) {
+        composition = await productEntity.findAllComponentsOfComposition(product?.id, { includeAssociations: true })
+    }
+
+    return ok({ product, composition })
 }
 
 
 export default function SingleProduct() {
     const location = useLocation()
     const activeTab = lastUrlSegment(location.pathname)
-    const loaderData = useLoaderData<typeof loader>()
+    const loaderData: HttpResponse | null = useLoaderData<typeof loader>()
     const product = loaderData?.payload?.product as ProductWithAssociations
+    const composition = loaderData?.payload?.composition as ProductCompositionWithAssociations[]
     const productId = product.id
 
     const activeTabStyle = "bg-primary text-white rounded-md py-1"
@@ -70,7 +80,7 @@ export default function SingleProduct() {
                 </Link>
             </div >
 
-            <Outlet context={{ product }} />
+            <Outlet context={{ product, composition }} />
         </>
     )
 }

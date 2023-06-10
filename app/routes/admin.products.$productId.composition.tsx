@@ -1,118 +1,56 @@
-
-import { Form, useLoaderData, useNavigation, useSearchParams } from "@remix-run/react";
-import { Save, Trash2 } from "lucide-react";
-import { Button } from "~/components/ui/button";
+import { Form, Link, useLoaderData, useOutletContext, useSearchParams } from "@remix-run/react";
 import Fieldset from "~/components/ui/fieldset";
 import { Input } from "~/components/ui/input";
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "~/components/ui/select";
-import { useState } from "react";
-import uppercase from "~/utils/to-uppercase";
+import { Label } from "~/components/ui/label";
+
 import { type ActionArgs } from "@remix-run/node";
-import { IngredientPriceModel } from "~/domain/ingredient/ingredient-price.model.server";
-import { IngredientModel } from "~/domain/ingredient/ingredient.model.server";
-import { ProductCompositionModel, type ProductComposition } from "~/domain/product/product-composition.model.server";
-import { ProductInfoModel } from "~/domain/product/product-info.model.server";
-import { ProductModel } from "~/domain/product/product.model.server";
 import errorMessage from "~/utils/error-message";
-import { serverError, badRequest, ok } from "~/utils/http-response.server";
+import { badRequest, ok } from "~/utils/http-response.server";
 import tryit from "~/utils/try-it";
+import type { ProductCompositionWithAssociations, ProductWithAssociations } from "~/domain/product/product.entity";
+import { ProductEntity } from "~/domain/product/product.entity";
+import type { ProductOutletContext } from "./admin.products.$productId";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectGroup, SelectItem } from "~/components/ui/select";
+import { Trash2, Edit, PlusSquare } from "lucide-react";
+import { Button } from "~/components/ui/button";
+import { Switch } from "~/components/ui/switch";
+import { TableRow, TableTitles, Table } from "~/components/primitives/table-list";
+import useFormSubmissionnState from "~/hooks/useFormSubmissionState";
+import randomReactKey from "~/utils/random-react-key";
+import SubmitButton from "~/components/primitives/submit-button/submit-button";
+import toFixedNumber from "~/utils/to-fixed-number";
+import type { ComponentType, ProductComposition } from "~/domain/product/product-composition.model.server";
+import NoRecordsFound from "~/components/primitives/no-records-found/no-records-found";
+import type { IngredientEntity } from "~/domain/ingredient/ingredient.entity";
+import { ComponentSelector } from "./admin.resources.component-selector";
 
-export async function loader() {
-
-    const [errProducts, products] = await tryit(ProductModel.findAll())
-    if (errProducts) {
-        return serverError({ message: errProducts.message })
-    }
-
-    const [errProductsInfo, productsInfo] = await tryit(ProductInfoModel.findAll())
-    if (errProductsInfo) {
-        return serverError({ message: errProductsInfo.message })
-    }
-
-    const [errProductsCompositions, productsCompositions] = await tryit(ProductCompositionModel.findAll())
-    if (errProductsCompositions) {
-        return serverError({ message: errProductsCompositions.message })
-    }
-
-    const [errIngredients, ingredients] = await tryit(IngredientModel.findAll())
-    if (errIngredients) {
-        return serverError({ message: errIngredients.message })
-    }
-
-    // get all ingredients prices that are default
-    const [errIngredientsPrices, ingredientsPrices] = await tryit(IngredientPriceModel.findWhere("defaultPrice", "==", true))
-    if (errIngredientsPrices) {
-        return serverError({ message: errIngredientsPrices.message })
-    }
-
-    // all the elemnts that are ingredients and products part of a composition
-    const compositionsElements: CompositionElement[] = products
-        .filter(p => productsInfo.find(pi => pi.productId === p.id && pi.isAlsoAnIngredient === true))
-        .map(p => {
-            return {
-                id: p.id,
-                name: p.name,
-                type: "product",
-                unit: "un",
-                unitPrice: productsCompositions.filter(pc => pc.productId === p.id).reduce((acc, curr) => {
-                    return acc + (ingredientsPrices.find(ip => ip.ingredientId === curr.elementId)?.unitPrice || 0)
-                }, 0)
-
-            }
-        }).concat(ingredients.map(i => {
-            return {
-                id: i.id,
-                name: i.name,
-                type: "ingredient",
-                unit: ingredientsPrices.find(ip => ip.ingredientId === i.id)?.unit || "un",
-                unitPrice: ingredientsPrices.find(ip => ip.ingredientId === i.id)?.unitPrice || 0
-            }
-        }))
-
-    return ok({
-        products,
-        productsInfo,
-        productsCompositions,
-        compositionsElements,
-        ingredients
-    })
-}
 
 export async function action({ request }: ActionArgs) {
     let formData = await request.formData();
     const { _action, ...values } = Object.fromEntries(formData);
 
-    if (_action === "composition-add-element") {
+    const productEntity = new ProductEntity()
 
-        const [err, data] = await tryit(ProductCompositionModel.add({
-            productId: values.productId,
-            elementId: values.elementId,
-            elementType: values.elementType,
-            quantity: values.quantity,
-            unit: values.unit,
-            cost: values.cost
+    if (_action === "composition-add-component") {
+        const [err, data] = await tryit(productEntity.addComponentToComposition({
+            productId: values.productId as string,
+            componentId: values.componentId as string,
+            componentType: values.componentType as ComponentType,
         }))
 
         if (err) {
-            return badRequest({ action: "composition-add-element", message: errorMessage(err) })
+            return badRequest({ action: "composition-add-component", message: errorMessage(err) })
         }
 
         return ok({ message: "Elemento adicionado com sucesso" })
     }
 
-    if (_action === "composition-delete-element") {
+    if (_action === "composition-delete-component") {
 
-        const [err, data] = await tryit(ProductCompositionModel.delete(values.productCompositionId as string))
+        const [err, data] = await tryit(productEntity.removeComponentFromComposition(values.id as string))
 
         if (err) {
-            return badRequest({ action: "composition-delete-element", message: errorMessage(err) })
+            return badRequest({ action: "composition-delete-component", message: errorMessage(err) })
         }
 
         return ok({ message: "Elemento removido com sucesso" })
@@ -122,149 +60,217 @@ export async function action({ request }: ActionArgs) {
     return null
 }
 
-
 export default function SingleProductComposition() {
-    let [searchParams, setSearchParams] = useSearchParams();
-    const productId = searchParams.get("id") as string
-
-    const loaderData = useLoaderData<typeof loader>()
-    // all products compositions
-    const productsCompositions: ProductComposition[] = loaderData.productsCompositions
-    // the composition of the current product
-    const productComposition: ProductComposition[] = productsCompositions.filter(p => p.productId === productId)
-
+    const context = useOutletContext<ProductOutletContext>()
+    const product = context.product as ProductWithAssociations
 
     return (
-        <ul className="md:p-4">
-            {productComposition.length > 0 && (
-                productComposition.map(element => {
+        <div className="flex flex-col gap-8 h-full">
+            {/* <ProductCompositionEdit /> */}
+            <ComponentSelector productId={product.id} />
+            <ProductComponentList />
 
-                    if (element.productId === undefined) return null
+        </div>
+    )
+}
 
-                    return (
-                        <li key={element.id || Math.random().toString(32).slice(2)}>
-                            <CompositionElementForm
-                                productCompositionId={element?.id}
-                                productId={productId}
-                                elementId={element?.elementId}
-                                elementType={element?.elementType}
-                                unit={element?.unit}
-                                quantity={element?.quantity}
-                                cost={element?.cost}
-                            />
-                        </li>
-                    )
-                }))
-            }
-            <li key={Math.random().toString(32).slice(2)}>
-                <CompositionElementForm
-                    productCompositionId={undefined}
-                    productId={productId}
-                    elementId={undefined}
-                    elementType={undefined}
-                    unit={undefined}
-                    quantity={undefined}
-                    cost={0}
+
+// function ProductCompositionEdit() {
+//     const context = useOutletContext<ProductOutletContext>()
+//     const product = context.product as ProductWithAssociations
+//     const productComposition = product.composition || []
+
+//     const loaderData = useLoaderData<{ elements: (IngredientEntity | ProductEntity)[] }>()
+//     const elements = loaderData.elements
+
+
+
+
+//     const [searchParams, setSearchParams] = useSearchParams()
+//     const productCompositionElementId = searchParams.get("productCompositionElementId")
+//     const component = productComposition.find(el => el.id === productCompositionElementId)
+
+//     const formActionSubmission = component?.id ? "composition-update-component" : "composition-add-component"
+
+//     let formTitle
+//     let submitButtonText
+//     let submitButtonLoadingText
+
+//     if (formActionSubmission === "composition-add-component") {
+//         submitButtonText = "Salvar"
+//         submitButtonLoadingText = "Salvando..."
+//         formTitle = "Novo preço"
+//     }
+
+//     if (formActionSubmission === "composition-update-component") {
+//         submitButtonText = "Atualizar"
+//         submitButtonLoadingText = "Atualizando..."
+//         formTitle = `Atualizar preço com ID: ${component?.id}`
+//     }
+
+//     const derivedUnitPrice = (component?.price || 0) / (component?.quantity || 1)
+
+//     return (
+//         <div className="md:p-8 md:border-2 rounded-lg border-muted">
+//             <div className="flex flex-col gap-4">
+//                 <h3 className="font-semibold">{formTitle}</h3>
+//                 <Form method="post" >
+
+//                     <div className="grid md:grid-cols-2 grid-cols-1 md:grid-rows-1 grid-rows-2 items-center md:gap-4">
+//                         <div>
+//                             <Input type="hidden" name="id" defaultValue={component?.id} />
+//                             <Input type="hidden" name="productId" defaultValue={product.id} />
+//                             <Fieldset>
+//                                 <Label htmlFor="supplierId">Forneçedor</Label>
+//                                 <Select name="supplierId" defaultValue={component?.supplierId} required >
+//                                     <SelectTrigger>
+//                                         <SelectValue placeholder="Forneçedor" className="text-xs" />
+//                                     </SelectTrigger>
+//                                     <SelectContent>
+//                                         <SelectGroup>
+//                                             {suppliers.map(supplier => (
+//                                                 supplier.id && <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>
+//                                             ))}
+//                                         </SelectGroup>
+//                                     </SelectContent>
+//                                 </Select>
+//                             </Fieldset>
+//                         </div>
+
+//                         <div className="flex md:flex-row gap-2">
+//                             <Fieldset >
+//                                 <Label htmlFor="unit">Unidade</Label>
+//                                 <div className="max-w-[100px]">
+//                                     <Select name="unit" defaultValue={component?.unit || "gr"} required>
+//                                         <SelectTrigger>
+//                                             <SelectValue placeholder="Unidade" />
+//                                         </SelectTrigger>
+//                                         <SelectContent>
+//                                             <SelectGroup >
+//                                                 <SelectItem value="gr">GR</SelectItem>
+//                                                 <SelectItem value="un">UN</SelectItem>
+//                                             </SelectGroup>
+//                                         </SelectContent>
+//                                     </Select>
+//                                 </div>
+//                             </Fieldset>
+//                             <Fieldset >
+//                                 <Label htmlFor="quantity">Quantitade</Label>
+//                                 <Input id="quantity" name="quantity" defaultValue={component?.quantity || 1} className="max-w-[100px]" autoComplete="off" required />
+//                             </Fieldset>
+//                             <Fieldset >
+//                                 <Label htmlFor="unit-price">Preço unitário</Label>
+//                                 <Input id="unit-price" name="unitPrice" readOnly defaultValue={component?.unitPrice || derivedUnitPrice}
+//                                     className="max-w-[100px] border-none w-full text-right text-muted-foreground" tabIndex={-1} autoComplete="off" />
+//                             </Fieldset>
+//                             <Fieldset >
+//                                 <Label htmlFor="price">Preço</Label>
+//                                 <Input id="price" name="price" defaultValue={component?.price || 1} className="max-w-[100px]" autoComplete="off" />
+//                             </Fieldset>
+//                         </div>
+
+//                     </div>
+//                     <Fieldset >
+//                         <div className="flex gap-16 items-center">
+//                             <Label htmlFor="default-price">Preço padrão</Label>
+//                             <Switch id="default-price" name="defaultPrice" defaultChecked={component?.defaultPrice} />
+//                         </div>
+//                     </Fieldset>
+//                     <div className="w-full flex gap-4 justify-end">
+//                         <Link to={`/admin/products/${product.id}/prices`}>
+//                             <Button type="button" variant={"outline"} size={"lg"} className="flex gap-4">
+//                                 <PlusSquare size={16} />
+//                                 Novo preço
+//                             </Button>
+//                         </Link>
+//                         <SubmitButton actionName={formActionSubmission} size={"lg"} className="w-full md:max-w-[150px] gap-2"
+//                             idleText={submitButtonText}
+//                             loadingText={submitButtonLoadingText}
+//                         />
+//                     </div>
+
+
+//                 </Form>
+//             </div>
+//         </div>
+
+//     )
+
+// }
+
+
+
+
+
+function ProductComponentList() {
+
+    const context = useOutletContext<ProductOutletContext>()
+    const productComposition = context.composition as ProductCompositionWithAssociations[] || []
+
+    const formSubmissionState = useFormSubmissionnState()
+
+    if (productComposition.length === 0) {
+        return <NoRecordsFound text="Nenhum componente adicionado" />
+    }
+
+    return (
+        <>
+            <Table>
+                <TableTitles
+                    clazzName="grid-cols-7"
+                    titles={[
+                        "Ações",
+                        "Nome",
+                        "Unidade",
+                        "Quantidade",
+                        "Custo Unitário Componente",
+                        "Custo Unitário",
+                        "Custo Total"
+
+                    ]}
                 />
-            </li>
-        </ul>
+
+                {productComposition.length > 0 && (
+                    productComposition.map((component) => {
+                        return (
+                            <Form method="post" key={component.id || randomReactKey()}>
+                                <TableRow
+                                    row={component}
+                                    showDateColumns={false}
+                                    clazzName="grid-cols-7"
+                                    isProcessing={formSubmissionState === "inProgress"}
+                                >
+                                    <div className="flex gap-2">
+                                        <Button variant="destructive" type="submit" name="_action" value="composition-delete-component" size={"sm"} className="w-[40px]">
+                                            <Trash2 size={16} />
+                                        </Button>
+                                        <Link to={`?componentId=${component.id}`}>
+                                            <Button type="button" size={"sm"} className="w-[40px]">
+                                                <Edit size={16} />
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                    <div>
+                                        <Input type="hidden" name="id" value={component.id} />
+                                        <Input type="hidden" name="productId" value={component.productId} />
+                                        <Input type="hidden" name="componentId" value={component.componentId} />
+                                        <Input type="hidden" name="componentType" value={component.componentType} />
+                                        <Input name="componentName" readOnly defaultValue={component.componentType === "ingredient" ? component.ingredient?.name : component.product?.name} className="border-none  w-full" />
+                                    </div>
+                                    <Input name="unit" readOnly defaultValue={component.unit} className="border-none  w-full" />
+                                    <Input name="quantity" readOnly defaultValue={component.quantity} className="border-none  w-full" />
+                                    <Input name="componentUnitCost" readOnly defaultValue={component.unitCost} className="border-none  w-full" />
+                                    <Input name="unitCost" readOnly defaultValue={component.unitCost} className="border-none  w-full" />
+                                    <Input name="costAmount" readOnly defaultValue={component.costAmount} className="border-none  w-full" />
+
+                                </TableRow>
+                            </Form >
+                        )
+                    })
+                )}
+            </Table>
+        </>
     )
+
 }
 
-
-interface CompositionElementFormProps {
-    productCompositionId?: string
-    productId: string
-    elementId?: string
-    elementType?: string
-    unit?: string
-    quantity?: number
-    cost?: number
-}
-
-
-function CompositionElementForm({ productCompositionId, productId, elementId, elementType, unit, quantity, cost }: CompositionElementFormProps) {
-    const navigation = useNavigation();
-    const loaderData = useLoaderData<typeof loader>()
-
-    // all products compositions, remove the element that also is the current product (eg. Massa cannot be a composition of Massa)
-    const elements: CompositionElement[] = loaderData.compositionsElements.filter(e => e.id !== productId)
-
-    const formActionSubmission = productCompositionId ? "composition-update-element" : "composition-add-element"
-
-    const isDisabledDeleteSubmissionButton = navigation.state === "submitting" || navigation.state === "loading"
-    const isDisabledSaveSubmissionButton = navigation.state === "submitting" || navigation.state === "loading"
-
-    // this state is used to update the elementType when the elementId is changed
-    const [elementIdSelected, setElementIdSelected] = useState(elementId)
-    const [quantityValue, setQuantityValue] = useState(quantity)
-
-    const elementSelected: CompositionElement = elements.find(e => e.id === elementIdSelected)
-
-    return (
-
-        <Form method="post" className="mb-2">
-            <div className="grid grid-cols-[auto_1fr] gap-2 items-center md:flex md:flex-row-reverse w-full md:items-start">
-
-                <div className="flex flex-col gap-2 md:flex-row-reverse h-[120px] md:h-auto">
-                    <Button type="submit" name="_action" value={formActionSubmission} disabled={isDisabledSaveSubmissionButton} size="sm" ><Save size={16} /></Button>
-                    <Button type="submit" variant="destructive" name="_action" value={"composition-delete-element"} disabled={isDisabledDeleteSubmissionButton} size="sm"><Trash2 size={16} /></Button>
-                </div>
-                <div className="mb-4 w-full">
-                    <div className="flex flex-col w-full">
-                        <div className="flex flex-col w-full md:flex-row gap-2">
-                            <Input type="hidden" name="productCompositionId" value={productCompositionId} />
-                            <Input type="hidden" name="productId" value={productId} />
-                            <Input type="hidden" name="elementType" defaultValue={elementType || elementSelected?.type} />
-                            <Input type="text" name="elementType" value={elementSelected?.unitPrice || 0} readOnly />
-                            <Fieldset>
-                                <Select name="elementId" defaultValue={elementId} required onValueChange={setElementIdSelected}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Elemento da composição" className="text-xs" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectGroup>
-                                            {elements.map(e => (
-                                                <SelectItem key={e.id} value={e.id} className={`${e.type === "product" && "font-semibold"}`}>
-                                                    {e.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </Select>
-                            </Fieldset>
-
-                            <div className="flex gap-2">
-                                {/* <Fieldset >
-                                    <Select name="unit" defaultValue={unit} required >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Unidade" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup >
-                                                <SelectItem value="gr">GR</SelectItem>
-                                                <SelectItem value="un">UN</SelectItem>
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-                                </Fieldset> */}
-                                <Fieldset>
-                                    <Input type="text" id="element-unit" required placeholder="Unidade" name="unit" className="md:w-[50px] outline-none border-none" defaultValue={uppercase(unit || elementSelected?.unit)} readOnly />
-                                </Fieldset>
-                                <Fieldset>
-                                    <Input type="number" id="element-quantity" required placeholder="Quantitade" name="quantity" className="md:w-[100px]" defaultValue={quantity} onChange={(e) => {
-                                        setQuantityValue(Number(e.target.value))
-                                    }} />
-                                </Fieldset>
-                                <Fieldset>
-                                    <Input type="text" id="element-cost" name="cost" className="md:w-[50px] outline-none border-none" value={cost || (elementSelected?.unitPrice || 0) * (quantityValue || 0)} readOnly />
-                                </Fieldset>
-                            </div>
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </Form>
-    )
-}

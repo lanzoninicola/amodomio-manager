@@ -20,6 +20,7 @@ import randomReactKey from "~/utils/random-react-key";
 import SubmitButton from "~/components/primitives/submit-button/submit-button";
 import toNumber from "~/utils/to-number";
 import toFixedNumber from "~/utils/to-fixed-number";
+import NoRecordsFound from "~/components/primitives/no-records-found/no-records-found";
 
 
 export async function action({ request }: ActionArgs) {
@@ -234,14 +235,7 @@ function IngredientPriceList() {
     const formSubmissionState = useFormSubmissionnState()
 
     if (ingredientPrices.length === 0) {
-        return (
-            <div className="grid place-items-center m-4">
-                <div className="flex flex-col items-center justify-center gap-4">
-                    <Bird size={64} className="hover:rotate-6" />
-                    <p className="text-xl font-normal text-gray-500">Nenhum preço cadastrado</p>
-                </div>
-            </div>
-        )
+        return <NoRecordsFound text="Nenhum preço cadastrado" />
     }
 
     return (

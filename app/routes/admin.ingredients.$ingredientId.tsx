@@ -39,7 +39,7 @@ export default function SingleIngredient() {
     const location = useLocation()
     const activeTab = lastUrlSegment(location.pathname)
     const loaderData = useLoaderData<typeof loader>()
-    console.log("loaderData", loaderData)
+
     const ingredient = loaderData?.payload?.ingredient as IngredientWithAssociations
     const suppliers = loaderData?.payload?.suppliers as Supplier[]
     const ingredientId = ingredient.id

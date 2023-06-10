@@ -13,6 +13,7 @@ import { type ProductOutletContext } from "./admin.products.$productId";
 import { type ProductWithAssociations } from "~/domain/product/product.entity";
 import { ProductMenuModel } from "~/domain/product/product-menu.model.server";
 import SubmitButton from "~/components/primitives/submit-button/submit-button";
+import { Vegan, WheatOff } from "lucide-react";
 
 
 export async function action({ request }: ActionArgs) {
@@ -69,8 +70,8 @@ export default function SingleProductMenu() {
     return (
         <div className="p-4">
             <Form method="post" className="w-full">
-                <div className="mb-6">
-                    <SubmitButton actionName={formActionSubmission} />
+                <div className="mb-4 flex justify-end">
+                    <SubmitButton actionName={formActionSubmission} size="lg" />
                 </div>
                 <div className="flex flex-col gap-2 border-2 border-muted rounded-lg px-4 py-8">
                     <Fieldset>
@@ -92,21 +93,23 @@ export default function SingleProductMenu() {
                     <Fieldset>
                         <div className="flex justify-between items-center">
                             <Label htmlFor="italian-product-name">Nome produto em italiano</Label>
-                            <Input id="italian-product-name" name="italian-product-name" placeholder="Nome" defaultValue={productMenu?.italianProductName} className="max-w-[250px]" />
+                            <Input id="italian-product-name" name="italian-product-name" placeholder="Nome" defaultValue={productMenu?.italianProductName} className="max-w-[300px]" />
                         </div>
                     </Fieldset>
                     <Fieldset>
                         <div className="flex justify-between">
-                            <Label htmlFor="is-vegetarian" className="text-sm">
-                                Produto vegetariano
+                            <Label htmlFor="is-vegetarian" className="flex gap-2 items-center">
+                                <span>Vegetariano</span>
+                                <Vegan size={"24"} />
                             </Label>
                             <Switch id="is-vegetarian" name="isVegetarian" defaultChecked={productMenu?.isVegetarian} />
                         </div>
                     </Fieldset>
                     <Fieldset>
                         <div className="flex justify-between">
-                            <Label htmlFor="is-gluten-free" className="text-sm">
-                                Produto sem gluten
+                            <Label htmlFor="is-gluten-free" className="flex gap-2 items-center">
+                                <span>Sem Gluten</span>
+                                <WheatOff size={"24"} />
                             </Label>
                             <Switch id="is-gluten-free" name="isGlutenFree" defaultChecked={productMenu?.isGlutenFree} />
                         </div>

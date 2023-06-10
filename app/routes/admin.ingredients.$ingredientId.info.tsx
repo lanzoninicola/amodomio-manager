@@ -61,8 +61,8 @@ export default function SingleIngredientInformation() {
     return (
         <div className="p-4">
             <Form method="post" className="w-full">
-                <div className="mb-4">
-                    <SubmitButton actionName={formActionSubmission} />
+                <div className="mb-4 flex justify-end">
+                    <SubmitButton actionName={formActionSubmission} size="lg" />
                 </div>
                 <div className="border-2 border-muted rounded-lg px-4 py-8">
                     <Input type="hidden" name="id" defaultValue={ingredientInfo?.id} />

@@ -9,8 +9,8 @@ interface IngredientPrice {
   supplierId: string;
   unit: string;
   quantity: number;
-  price: number;
   unitPrice: number;
+  price: number;
   defaultPrice: boolean;
 }
 

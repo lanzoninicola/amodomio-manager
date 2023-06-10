@@ -45,3 +45,23 @@ export default function App() {
     </html>
   );
 }
+
+// export function ErrorBoundary({ error }) {
+//   console.error(error);
+//   return (
+//     <html>
+//       <head>
+//         <title>Oh no!</title>
+//         <Meta />
+//         <Links />
+//       </head>
+//       <body>
+//         <div className="m-4 p-4 bg-red-300">
+//           <h1>Oh no!</h1>
+//           <p className="text-red-700">{error?.message || "Erro generico"}</p>
+//         </div>
+//         <Scripts />
+//       </body>
+//     </html>
+//   );
+// }
