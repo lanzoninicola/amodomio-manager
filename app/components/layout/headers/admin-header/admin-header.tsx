@@ -2,10 +2,15 @@ import { User2 } from "lucide-react";
 import Navbar from "~/components/primitives/navbar/navbar";
 
 
+// catalogo => produtos, categorias, unidades de medida
+// cadastros => produtos, clientes e fornecedores
+
+
 const navLinks = [
     { label: "Ingredientes", href: "/admin/ingredients" },
     { label: "Produtos", href: "/admin/products" },
     { label: "Forneçedores", href: "/admin/suppliers" },
+    { label: "Categorias", href: "/admin/categories" },
 ]
 
 

@@ -67,7 +67,6 @@ export default function SingleIngredientInformation() {
                 <div className="border-2 border-muted rounded-lg px-4 py-8">
                     <Input type="hidden" name="id" defaultValue={ingredientInfo?.id} />
                     <Input type="hidden" name="ingredientId" defaultValue={ingredient.id || undefined} />
-
                     <Fieldset>
                         <div className="flex justify-between">
                             <Label htmlFor="description">Descrição produto</Label>

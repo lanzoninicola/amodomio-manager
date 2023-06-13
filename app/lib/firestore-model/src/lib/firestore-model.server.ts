@@ -18,11 +18,13 @@ import type FirestoreClient from "./firestore-client.server";
 import type { FirestoreDocument } from "../types";
 import errorMessage from "../utils/error-message";
 
-export type whereCompoundConditions = {
+export type whereCompoundCondition = {
   field: string;
   op: WhereFilterOp;
   value: any;
-}[];
+};
+
+export type whereCompoundConditions = whereCompoundCondition[];
 
 /**
  * @class FirestoreModel

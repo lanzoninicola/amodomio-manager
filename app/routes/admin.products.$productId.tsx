@@ -1,6 +1,8 @@
 import type { LoaderArgs } from "@remix-run/node";
 import { Link, Outlet, useLoaderData, useLocation } from "@remix-run/react";
-import { type ProductComposition } from "~/domain/product/product-composition.model.server";
+import { CategoryEntity } from "~/domain/category/category.entity.server";
+import type { Category } from "~/domain/category/category.model.server";
+import type { ComponentType } from "~/domain/product/product-composition.model.server";
 import { type ProductCompositionWithAssociations, ProductEntity, type ProductWithAssociations } from "~/domain/product/product.entity";
 import { type Product } from "~/domain/product/product.model.server";
 import type { HttpResponse } from "~/utils/http-response.server";
@@ -9,9 +11,19 @@ import { lastUrlSegment, urlAt } from "~/utils/url";
 
 export interface ProductOutletContext {
     product: ProductWithAssociations | Product | null
-    composition: ProductCompositionWithAssociations[] | ProductComposition[] | null
+    categories: Category[] | null
+    composition: ProductComponent[] | null
 }
 
+export interface ProductComponent {
+    id: string
+    componentId: string
+    componentType: ComponentType
+    productId: string
+    name: string
+    unit?: string
+    quantity?: number
+}
 
 export async function loader({ request }: LoaderArgs) {
     const productId = urlAt(request.url, -2)
@@ -30,10 +42,31 @@ export async function loader({ request }: LoaderArgs) {
     let composition = null
 
     if (product?.id) {
-        composition = await productEntity.findAllComponentsOfComposition(product?.id, { includeAssociations: true })
+        composition = await productEntity.findAllComponentsOfComposition(product?.id, { includeAssociations: true }) as ProductCompositionWithAssociations[]
     }
 
-    return ok({ product, composition })
+    let categories = null
+
+    if (product?.id) {
+        const categoryEntity = new CategoryEntity()
+        categories = await categoryEntity.findAll()
+    }
+
+
+    return ok({
+        product,
+        composition: composition?.map(c => {
+            return {
+                id: c.id,
+                componentId: c.componentId,
+                componentType: c.componentType,
+                productId: c.productId,
+                name: c.componentType === "product" ? c.product?.name : c.ingredient?.name,
+            }
+        }),
+        categories
+    })
+
 }
 
 
@@ -42,7 +75,8 @@ export default function SingleProduct() {
     const activeTab = lastUrlSegment(location.pathname)
     const loaderData: HttpResponse | null = useLoaderData<typeof loader>()
     const product = loaderData?.payload?.product as ProductWithAssociations
-    const composition = loaderData?.payload?.composition as ProductCompositionWithAssociations[]
+    const composition = loaderData?.payload?.composition as ProductComponent[]
+    const categories = loaderData?.payload?.categories as Category[]
     const productId = product.id
 
     const activeTabStyle = "bg-primary text-white rounded-md py-1"
@@ -80,7 +114,7 @@ export default function SingleProduct() {
                 </Link>
             </div >
 
-            <Outlet context={{ product, composition }} />
+            <Outlet context={{ product, composition, categories }} />
         </>
     )
 }

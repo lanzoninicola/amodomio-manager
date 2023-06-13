@@ -14,6 +14,9 @@ import { type ProductWithAssociations } from "~/domain/product/product.entity";
 import { ProductMenuModel } from "~/domain/product/product-menu.model.server";
 import SubmitButton from "~/components/primitives/submit-button/submit-button";
 import { Vegan, WheatOff } from "lucide-react";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { CategorySelector } from "./admin.resources.categories-selector";
+import type { Category } from "~/domain/category/category.model.server";
 
 
 export async function action({ request }: ActionArgs) {
@@ -25,6 +28,7 @@ export async function action({ request }: ActionArgs) {
         const [err, data] = await tryit(ProductMenuModel.add({
             productId: values.productId,
             show: values.show,
+            categoryId: values.categoryId,
             description: values.description,
             italianProductName: values.italianProductName,
             isVegetarian: values.isVegetarian,
@@ -42,11 +46,12 @@ export async function action({ request }: ActionArgs) {
 
         const [err, data] = await tryit(ProductMenuModel.update(values.id as string, {
             productId: values.productId,
-            show: values.show,
-            description: values.description,
-            italianProductName: values.italianProductName,
-            isVegetarian: values.isVegetarian,
-            isGlutenFree: values.isGlutenFree
+            show: values.show || false,
+            categoryId: values.categoryId || null,
+            description: values.description || "",
+            italianProductName: values.italianProductName || "",
+            isVegetarian: values.isVegetarian || false,
+            isGlutenFree: values.isGlutenFree || false
         }))
 
         if (err) {
@@ -63,6 +68,7 @@ export default function SingleProductMenu() {
 
     const context = useOutletContext<ProductOutletContext>()
     const product = context.product as ProductWithAssociations
+    const categories = context.categories as Category[]
     const productMenu = product.menu
     const formActionSubmission = productMenu?.id ? "product-menu-update" : "product-menu-create"
 
@@ -77,12 +83,46 @@ export default function SingleProductMenu() {
                     <Fieldset>
                         <Input type="hidden" name="id" defaultValue={productMenu?.id} />
                         <Input type="hidden" name="productId" defaultValue={product.id || undefined} />
-                        <div className="flex justify-between">
-                            <Label htmlFor="show-on-menu" className="text-sm">
-                                Mostrar no cardapio
-                            </Label>
-                            <Switch id="show-on-menu" name="show" defaultChecked={productMenu?.show} />
-                        </div>
+                        <Fieldset>
+                            <div className="flex justify-between   items-center">
+                                <Label htmlFor="show-on-menu" className="text-sm">
+                                    Mostrar no cardapio
+                                </Label>
+                                <Switch id="show-on-menu" name="show" defaultChecked={productMenu?.show} />
+                            </div>
+                        </Fieldset>
+                        <Fieldset>
+                            <div className="flex justify-between items-center">
+                                <Label htmlFor="category" className="text-sm">
+                                    Categoria
+                                </Label>
+                                <div className="w-[300px]">
+                                    <Select name="categoryId" defaultValue={productMenu?.categoryId} required>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Seleçionar categoria" className="text-xs text-muted" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                {categories && categories.map(c => {
+
+                                                    if (c?.id === undefined) {
+                                                        return null
+                                                    }
+
+                                                    return (
+                                                        <SelectItem key={c.id} value={c.id}>
+                                                            {c.name}
+                                                        </SelectItem>
+                                                    )
+
+                                                })}
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                        </Fieldset>
                     </Fieldset>
                     <Fieldset>
                         <div className="flex justify-between">

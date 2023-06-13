@@ -5,6 +5,7 @@ import { IngredientEntity, type IngredientWithAssociations } from "~/domain/ingr
 import { type Ingredient } from "~/domain/ingredient/ingredient.model.server";
 import { SupplierEntity } from "~/domain/supplier/supplier.entity.server";
 import { type Supplier } from "~/domain/supplier/supplier.model.server";
+import type { HttpResponse } from "~/utils/http-response.server";
 import { badRequest, ok } from "~/utils/http-response.server";
 import { lastUrlSegment, urlAt } from "~/utils/url";
 
@@ -38,7 +39,7 @@ export async function loader({ request }: LoaderArgs) {
 export default function SingleIngredient() {
     const location = useLocation()
     const activeTab = lastUrlSegment(location.pathname)
-    const loaderData = useLoaderData<typeof loader>()
+    const loaderData: HttpResponse | null = useLoaderData<typeof loader>()
 
     const ingredient = loaderData?.payload?.ingredient as IngredientWithAssociations
     const suppliers = loaderData?.payload?.suppliers as Supplier[]

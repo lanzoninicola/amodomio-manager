@@ -1,8 +1,10 @@
 import type { V2_MetaFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
+import { useLoaderData } from "@remix-run/react";
+import Container from "~/components/layout/container/container";
+import { CategoryEntity } from "~/domain/category/category.entity.server";
+import { ProductEntity } from "~/domain/product/product.entity";
+import type { Product } from "~/domain/product/product.model.server";
+import { ok } from "~/utils/http-response.server";
 
 export const meta: V2_MetaFunction = () => {
   return [
@@ -13,7 +15,16 @@ export const meta: V2_MetaFunction = () => {
 
 export async function loader({ request }) {
 
-  return null
+  const productEntity = new ProductEntity()
+  const product = await productEntity.findAll()
+
+  const categoryEntity = new CategoryEntity()
+  const categories = await categoryEntity.findAll()
+
+  return ok({
+    product,
+    categories
+  })
 }
 
 export async function action({ request }) {
@@ -27,5 +38,14 @@ export async function action({ request }) {
 
 
 export default function HomePage() {
-  return <div className="grid place-items-center center w-screen h-screen text-4xl">This is the cardapio page</div>
+
+  const loaderData = useLoaderData<typeof loader>()
+  const products: Product[] = loaderData.payload.product
+  const categories = loaderData.payload.categories
+
+  return (
+    <Container>
+      <div className="grid place-items-center center w-full h-full text-4xl">This is the cardapio page</div>
+    </Container>
+  )
 }

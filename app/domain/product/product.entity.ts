@@ -16,7 +16,6 @@ import {
   IngredientModel,
   type Ingredient,
 } from "../ingredient/ingredient.model.server";
-import { IngredientPriceModel } from "../ingredient/ingredient-price.model.server";
 
 export interface ProductWithAssociations extends Product {
   info: ProductInfo | null;
@@ -24,17 +23,9 @@ export interface ProductWithAssociations extends Product {
   menu: ProductMenu | null;
 }
 
-type IngredientWithUnitCost = Ingredient & {
-  unitCost: number;
-};
-
-type ProductWithUnitCost = Product & {
-  unitCost: number;
-};
-
 export interface ProductCompositionWithAssociations extends ProductComposition {
-  product: ProductWithUnitCost | null;
-  ingredient: IngredientWithUnitCost | null;
+  product: Product | null;
+  ingredient: Ingredient | null;
 }
 
 export class ProductEntity {
@@ -165,7 +156,9 @@ export class ProductEntity {
     options = {
       includeAssociations: true,
     }
-  ): Promise<ProductComposition[] | ProductCompositionWithAssociations[]> {
+  ): Promise<
+    ProductComposition[] | ProductCompositionWithAssociations[] | Ingredient[]
+  > {
     const components = await ProductCompositionModel.whereCompound([
       {
         field: "productId",
@@ -178,9 +171,7 @@ export class ProductEntity {
       return components;
     }
 
-    const componentsWithAssociations = [];
-
-    for (const component of components) {
+    const promises = components.map(async (component) => {
       const componentsWithAssociation: ProductCompositionWithAssociations = {
         ...component,
         product: null,
@@ -188,46 +179,40 @@ export class ProductEntity {
       };
 
       if (component.componentType === "product") {
-        const product = await ProductModel.findById(component.componentId);
-        if (product) {
-          componentsWithAssociation["product"] = {
-            ...product,
-            unitCost: product.cost || 0,
-          };
-        }
+        componentsWithAssociation["product"] = await ProductModel.findById(
+          component.componentId
+        );
       }
 
       if (component.componentType === "ingredient") {
-        const ingredient = await IngredientModel.findById(
-          component.componentId
-        );
-        const ingredientPrice = await IngredientPriceModel.whereCompound([
-          {
-            field: "ingredientId",
-            op: "==",
-            value: component.componentId,
-          },
-          {
-            field: "defaultPrice",
-            op: "==",
-            value: true,
-          },
-        ]);
-        if (ingredient) {
-          componentsWithAssociation["ingredient"] = {
-            ...ingredient,
-            unitCost:
-              ingredientPrice.length === 0 ? 0 : ingredientPrice[0].unitPrice,
-          };
-        }
+        componentsWithAssociation["ingredient"] =
+          await IngredientModel.findById(component.componentId);
       }
 
-      componentsWithAssociations.push(componentsWithAssociation);
-    }
+      return componentsWithAssociation;
+    });
 
-    console.log(componentsWithAssociations);
+    const componentsWithAssociations = await Promise.all(promises);
 
     return componentsWithAssociations;
+
+    // const promises = components.map((component) => {
+    //   console.log(component.componentId);
+
+    //   const foo = IngredientModel.findById(component.componentId);
+
+    //   console.log(foo);
+    //   return foo;
+    // });
+
+    // const componentsWithAssociations = await Promise.all(promises);
+
+    // console.log(
+    //   "🚀 ~ file: product.entity.ts:221 ~ ProductEntity ~ componentsWithAssociations:",
+    //   componentsWithAssociations
+    // );
+
+    // return componentsWithAssociations;
   }
 
   validate(product: Product) {
