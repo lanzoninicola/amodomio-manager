@@ -1,8 +1,8 @@
 import { useLoaderData, useNavigation, Form, Link } from "@remix-run/react"
-import { MoreHorizontal } from "lucide-react"
+import { Edit } from "lucide-react"
 import Container from "~/components/layout/container/container"
 import NoRecordsFound from "~/components/primitives/no-records-found/no-records-found"
-import { TableTitles, TableRows, TableRow, Table } from "~/components/primitives/table-list"
+import { TableTitles, TableRows, TableRow, Table, EditItemButton } from "~/components/primitives/table-list"
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { SizeEntity } from "~/domain/size/size.entity.server"
@@ -77,15 +77,7 @@ function SizeTableRow({ size, clazzName }: SizeTableRowProps) {
                 clazzName={`${clazzName}`}
                 dateColumnsCondensed={true}
             >
-                <div className="flex gap-2 md:gap-4 mb-2 items-center">
-                    <Link to={`/admin/sizes/${size.id}/info`}>
-                        <Button type="button" variant={"outline"} className="border-black">
-                            <MoreHorizontal size={16} />
-                        </Button>
-                    </Link>
-
-                </div>
-
+                <EditItemButton to={`/admin/sizes/${size.id}/info`} />
                 <Input type="hidden" name="id" value={size.id} />
                 <Input name="name" defaultValue={size.name} className="border-none w-full" />
                 <Input type="text" readOnly defaultValue={size.slices} className="border-none max-w-[70px]" />

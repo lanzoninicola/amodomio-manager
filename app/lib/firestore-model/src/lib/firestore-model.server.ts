@@ -294,25 +294,8 @@ export class FirestoreModel<T> {
    * @param value  - The value to search
    * @returns  - An array of documents
    */
-  async findOne(
-    field: string,
-    operator: WhereFilterOp,
-    value: any
-  ): Promise<T> {
-    let result: FirestoreDocument[] = [];
-
-    const querySnapshot = await getDocs(
-      query(
-        collection(this._client.connection, this._collectionName),
-        where(field, operator, value)
-      )
-    );
-
-    querySnapshot.forEach((doc) => {
-      const data = { ...doc.data(), id: doc.id };
-
-      result.push(data);
-    });
+  async findOne(conditions: whereCompoundConditions): Promise<T> {
+    const result = await this.whereCompound(conditions);
 
     return result[0] as T;
   }

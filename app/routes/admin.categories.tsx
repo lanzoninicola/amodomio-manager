@@ -1,24 +1,19 @@
 import type { ActionArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
 import { Form, useLoaderData, useNavigation, Link, useSearchParams } from "@remix-run/react";
-import { Delete, Edit, MoreHorizontal, PinOff, Trash2 } from "lucide-react";
 import Container from "~/components/layout/container/container";
 import SubmitButton from "~/components/primitives/submit-button/submit-button";
-import { Table, TableRow, TableRows, TableTitles } from "~/components/primitives/table-list";
+import { DeleteItemButton, EditItemButton, Table, TableRow, TableRows, TableTitles } from "~/components/primitives/table-list";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import Fieldset from "~/components/ui/fieldset";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { Separator } from "~/components/ui/separator";
-import { CategoryEntity } from "~/domain/category/category.entity.server";
-import type { Category, CategoryModel } from "~/domain/category/category.model.server";
+import { categoryEntity } from "~/domain/category/category.entity.server";
+import type { Category } from "~/domain/category/category.model.server";
 import errorMessage from "~/utils/error-message";
 import { badRequest, ok } from "~/utils/http-response.server";
 import tryit from "~/utils/try-it";
 
 export async function loader() {
-    const categoryEntity = new CategoryEntity()
     const categories = await categoryEntity.findAll()
 
     return ok({ categories })
@@ -154,16 +149,9 @@ function CategoryTableRow({ category, clazzName }: CategoryTableRowProps) {
                 isProcessing={navigation.state !== "idle"}
                 clazzName={`${clazzName}`}
             >
-                <div className="flex gap-2 md:gap-4 mb-2">
-                    <Link to={`/admin/categories?id=${category.id}`}>
-                        <Button type="button" variant={"outline"} className="border-black">
-                            <Edit size={16} />
-                        </Button>
-                    </Link>
-                    <Button variant="outline" className="border-red-500" type="submit" name="_action" value="category-delete">
-                        <Trash2 size={16} color="red" />
-                    </Button>
-
+                <div className="flex gap-2 md:gap-2 items-center">
+                    <EditItemButton to={`/admin/categories?id=${category.id}`} />
+                    <DeleteItemButton actionName="category-delete" />
                 </div>
                 <div>
                     <Input type="hidden" name="id" value={category.id} />

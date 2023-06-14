@@ -56,7 +56,7 @@ export default function SingleProductNew() {
 
                                 <div className="max-w-[150px]">
                                     <Label htmlFor="unit">Unidade</Label>
-                                    <Select name="unit" required>
+                                    <Select name="unit" required defaultValue="gr">
                                         <SelectTrigger>
                                             <SelectValue placeholder="Selecionar..." />
                                         </SelectTrigger>

@@ -1,9 +1,13 @@
 interface TableTitlesProps {
   titles: string[];
   clazzName?: React.HTMLAttributes<HTMLDivElement>["className"];
+  center?: boolean;
 }
 
-export default function TableTitles({ titles, clazzName }: TableTitlesProps) {
+export default function TableTitles({ titles, clazzName, center }: TableTitlesProps) {
+
+  if (center) clazzName = clazzName?.concat(" justify-items-center")
+
   return (
     <div
       data-element="table-titles"

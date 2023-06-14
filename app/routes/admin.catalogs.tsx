@@ -3,41 +3,37 @@ import { Plus } from "lucide-react";
 import { AlertError, AlertOk } from "~/components/layout/alerts/alerts";
 import Container from "~/components/layout/container/container";
 import { Button } from "~/components/ui/button";
-import type { HttpResponse } from "~/utils/http-response.server";
+import { type HttpResponse } from "~/utils/http-response.server";
 
 
 
-export default function IngredientsOutlet() {
+export default function CatalogsOutlet() {
+
 
 
     return (
         <Container>
             <div className="flex justify-between items-center mb-4">
                 <h1 className="text-2xl font-bold">
-                    Ingredientes
+                    Catálogos
                 </h1>
-                <Link to={`?action=new`}>
+                <Link to={`/admin/catalogs/builder?action=new`}>
                     <Button type="button" className="flex gap-2">
                         <Plus size={16} />
-                        Novo Ingrediente
+                        Novo Catálogo
                     </Button>
                 </Link>
             </div>
             <Outlet />
-            <IngredientsFormSubmissionAlert />
+            {/* <CatalogFormSubmissionAlert /> */}
         </Container>
     )
 }
 
-function IngredientsFormSubmissionAlert() {
+function CatalogFormSubmissionAlert() {
     const actionData = useActionData<HttpResponse | null>()
-    const actionType = actionData?.payload?.action
 
     let errorTitle
-
-    if (actionType === "ingredient-add-price") errorTitle = "Erro ao adicionar o preço"
-    if (actionType === "ingredient-update-price") errorTitle = "Erro a atualizar o preço"
-    if (actionType === "ingredient-delete-price") errorTitle = "Erro ao excluir o ingrediente"
 
     if (actionData && actionData?.status > 201) {
         return (
@@ -50,7 +46,6 @@ function IngredientsFormSubmissionAlert() {
             <AlertOk />
         )
     }
-
 
     return null
 

@@ -22,7 +22,7 @@ export default function ProductsOutlet() {
                 </Link>
             </div>
             <Outlet />
-            <ProductFormSubmissionAlert />
+            {/* <ProductFormSubmissionAlert /> */}
         </Container>
     )
 }

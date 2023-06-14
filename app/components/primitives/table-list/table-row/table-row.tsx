@@ -37,7 +37,7 @@ export default function TableRow({
     <li
       data-element="table-row"
       className={`${isProcessing ? "opacity-25" : ""
-        } cursor-pointer w-full grid gap-x-6 p-2 mb-2 text-sm items-center hover:bg-gray-300 ${clazzName}`}
+        } cursor-pointer w-full grid gap-x-6 p-2 mb-2 text-sm items-center hover:bg-gray-200 border-b-2 border-b-gray-50 ${clazzName}`}
     >
       {children}
       {showDateColumns === true && dateColumns}

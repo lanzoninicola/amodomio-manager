@@ -1,7 +1,7 @@
 import { type LoaderArgs } from "@remix-run/node"
 import { useLoaderData } from "@remix-run/react"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select"
-import { CategoryEntity } from "~/domain/category/category.entity.server"
+import { categoryEntity } from "~/domain/category/category.entity.server"
 import { type Category } from "~/domain/category/category.model.server"
 import type { HttpResponse } from "~/utils/http-response.server";
 import { ok } from "~/utils/http-response.server"

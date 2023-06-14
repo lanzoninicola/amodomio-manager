@@ -18,9 +18,6 @@ export async function action({ request }: ActionArgs) {
     const { _action, ...values } = Object.fromEntries(formData);
     const sizeEntity = new SizeEntity()
 
-    console.log(values)
-
-
     if (_action === "size-create") {
 
         const size: Size = {

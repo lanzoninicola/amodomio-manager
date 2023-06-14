@@ -1,7 +1,13 @@
 import { serverError } from "~/utils/http-response.server";
-import type { Product, ProductComponent } from "./product.model.server";
+import type {
+  Product,
+  ProductComponent,
+  ProductInfo,
+  ProductType,
+} from "./product.model.server";
 import { ProductModel } from "./product.model.server";
 import type { whereCompoundConditions } from "~/lib/firestore-model/src";
+import type { LatestSellPrice } from "../sell-price/sell-price.model.server";
 
 export class ProductEntity {
   async create(product: Product): Promise<Product> {
@@ -27,6 +33,15 @@ export class ProductEntity {
 
   async update(id: string, updatedData: any) {
     return await ProductModel.update(id, updatedData);
+  }
+
+  async delete(id: string) {
+    // TODO: check if product is being used in a catalog
+    // TODO: check if product is a kit or group or manufactured product
+    // TODO: check if product is a component of another product
+    // TODO: check if product is inside an order
+
+    return await ProductModel.delete(id);
   }
 
   async addComponent(productId: string, component: ProductComponent) {
@@ -76,77 +91,65 @@ export class ProductEntity {
     });
   }
 
-  // async updateComponentInComposition(id: string, element: ProductComposition) {
-  //   return await ProductCompositionModel.update(id, element);
-  // }
+  async getSellingPrice(productId: string): Promise<LatestSellPrice> {
+    const product = await this.findById(productId);
 
-  // async removeComponentFromComposition(id: string) {
-  //   return await ProductCompositionModel.delete(id);
-  // }
+    if (!product) {
+      return {
+        unitPrice: 0,
+        unitPromotionalPrice: 0,
+      };
+    }
 
-  // async findAllComponentsOfComposition(
-  //   productId: string,
-  //   options = {
-  //     includeAssociations: true,
-  //   }
-  // ): Promise<
-  //   ProductComposition[]
-  // > {
-  //   const components = await ProductCompositionModel.whereCompound([
-  //     {
-  //       field: "productId",
-  //       op: "==",
-  //       value: productId,
-  //     },
-  //   ]);
+    const productType = product?.info?.type;
 
-  //   if (options.includeAssociations === false) {
-  //     return components;
-  //   }
+    if (!productType) {
+      return {
+        unitPrice: 0,
+        unitPromotionalPrice: 0,
+      };
+    }
 
-  //   const promises = components.map(async (component) => {
-  //     const componentsWithAssociation: ProductCompositionWithAssociations = {
-  //       ...component,
-  //       product: null,
-  //       ingredient: null,
-  //     };
+    return (
+      product.pricing?.latestSellPrice || {
+        unitPrice: 0,
+        unitPromotionalPrice: 0,
+      }
+    );
+  }
 
-  //     if (component.componentType === "product") {
-  //       componentsWithAssociation["product"] = await ProductModel.findById(
-  //         component.componentId
-  //       );
-  //     }
+  static getProductTypeValues(type: ProductInfo["type"] | null | undefined) {
+    switch (type) {
+      case "manufactured":
+        return "Fabricado";
+      case "raw_material":
+        return "Materia prima";
+      case "kit":
+        return "Kit";
+      case "group":
+        return "Grupo de produtos";
+      case "semi_manufactured":
+        return "Semi-manufaturado";
+      case "simple":
+        return "Simples";
+      case null:
+      case undefined:
+        return "Não definido";
+      default:
+        return "Não definido";
+    }
+  }
 
-  //     if (component.componentType === "ingredient") {
-  //       componentsWithAssociation["ingredient"] =
-  //         await IngredientModel.findById(component.componentId);
-  //     }
-
-  //     return componentsWithAssociation;
-  //   });
-
-  //   const componentsWithAssociations = await Promise.all(promises);
-
-  //   return componentsWithAssociations;
-
-  //   // const promises = components.map((component) => {
-  //   //   console.log(component.componentId);
-
-  //   //   const foo = IngredientModel.findById(component.componentId);
-
-  //   //   console.log(foo);
-  //   //   return foo;
-  //   // });
-
-  //   // const componentsWithAssociations = await Promise.all(promises);
-
-  //   // console.log(
-  //   //   "🚀 ~ file: product.entity.ts:221 ~ ProductEntity ~ componentsWithAssociations:",
-  //   //   componentsWithAssociations
-  //   // );
-
-  //   // return componentsWithAssociations;
-  // }
+  static getProductTypeRawValues(): { value: ProductType; label: string }[] {
+    return [
+      { value: "manufactured", label: "Fabricado" },
+      { value: "raw_material", label: "Materia prima" },
+      { value: "kit", label: "Kit" },
+      { value: "group", label: "Grupo de produtos" },
+      { value: "semi_manufactured", label: "Semi-manufaturado" },
+      { value: "simple", label: "Simples" },
+    ];
+  }
 
   validate(product: Product) {
     if (!product.name) {

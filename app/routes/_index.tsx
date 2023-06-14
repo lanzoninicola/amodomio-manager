@@ -1,7 +1,7 @@
 import type { V2_MetaFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import Container from "~/components/layout/container/container";
-import { CategoryEntity } from "~/domain/category/category.entity.server";
+import { categoryEntity } from "~/domain/category/category.entity.server";
 import { ProductEntity } from "~/domain/product/product.entity";
 import type { Product } from "~/domain/product/product.model.server";
 import { ok } from "~/utils/http-response.server";
@@ -18,7 +18,6 @@ export async function loader({ request }) {
   const productEntity = new ProductEntity()
   const product = await productEntity.findAll()
 
-  const categoryEntity = new CategoryEntity()
   const categories = await categoryEntity.findAll()
 
   return ok({
