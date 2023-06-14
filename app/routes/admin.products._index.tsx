@@ -1,5 +1,5 @@
 import { useLoaderData, useNavigation, Form, Link } from "@remix-run/react"
-import { MoreHorizontal, PinOff } from "lucide-react"
+import { MoreHorizontal } from "lucide-react"
 import Container from "~/components/layout/container/container"
 import { TableTitles, TableRows, TableRow, Table } from "~/components/primitives/table-list"
 import { Button } from "~/components/ui/button"
@@ -74,9 +74,9 @@ function ProductTableRow({ product, clazzName }: ProductTableRowProps) {
                             <MoreHorizontal size={16} />
                         </Button>
                     </Link>
-                    <Button variant="outline" className="border-red-500" type="submit" name="_action" value="product-disable">
+                    {/* <Button variant="outline" className="border-red-500" type="submit" name="_action" value="product-disable">
                         <PinOff size={16} color="red" />
-                    </Button>
+                    </Button> */}
 
                 </div>
                 <div>

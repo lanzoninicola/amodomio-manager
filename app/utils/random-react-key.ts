@@ -1,3 +1,3 @@
 export default function randomReactKey() {
-  return Math.random().toString(32).slice(2);
+  return Math.random().toString(32).slices(2);
 }

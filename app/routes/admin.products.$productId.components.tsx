@@ -4,10 +4,9 @@ import { type ActionArgs } from "@remix-run/node";
 import errorMessage from "~/utils/error-message";
 import { badRequest, ok } from "~/utils/http-response.server";
 import tryit from "~/utils/try-it";
-import type { ProductCompositionWithAssociations, ProductWithAssociations } from "~/domain/product/product.entity";
 import { ProductEntity } from "~/domain/product/product.entity";
-import type { ProductComponent, ProductOutletContext } from "./admin.products.$productId";
-import { Trash2, Edit, Save } from "lucide-react";
+import type { ProductOutletContext } from "./admin.products.$productId";
+import { Trash2, Save } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { TableRow, TableTitles, Table } from "~/components/primitives/table-list";
 import useFormSubmissionnState from "~/hooks/useFormSubmissionState";
@@ -16,6 +15,11 @@ import type { ComponentType } from "~/domain/product/product-composition.model.s
 import NoRecordsFound from "~/components/primitives/no-records-found/no-records-found";
 import { ComponentSelector } from "./admin.resources.component-selector";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import type { Product, ProductComponent } from "~/domain/product/product.model.server";
+import { jsonParse, jsonStringify } from "~/utils/json-helper";
+import toNumber from "~/utils/to-number";
+import Tooltip from "~/components/primitives/tooltip/tooltip";
+
 
 
 export async function action({ request }: ActionArgs) {
@@ -23,13 +27,28 @@ export async function action({ request }: ActionArgs) {
     const { _action, ...values } = Object.fromEntries(formData);
 
     const productEntity = new ProductEntity()
+    const parentProductId = values.parentId as string
+
+
+    if (!parentProductId) {
+        return badRequest({ action: "composition-add-component", message: "O ID do produto não foi informado" })
+    }
 
     if (_action === "composition-add-component") {
-        const [err, data] = await tryit(productEntity.addComponentToComposition({
-            productId: values.productId as string,
-            componentId: values.componentId as string,
-            componentType: values.componentType as ComponentType,
-        }))
+
+        if (!jsonParse(values.component)) {
+            return badRequest({ action: "composition-add-component", message: "Occorreu um erro adicionando o componente" })
+        }
+
+        const newComponent: ProductComponent = {
+            parentId: parentProductId,
+            product: jsonParse(values.component),
+            quantity: 0,
+            unit: "un",
+            unitCost: 0,
+        }
+
+        const [err, data] = await tryit(productEntity.addComponent(parentProductId, newComponent))
 
         if (err) {
             return badRequest({ action: "composition-add-component", message: errorMessage(err) })
@@ -38,9 +57,42 @@ export async function action({ request }: ActionArgs) {
         return ok({ message: "Elemento adicionado com sucesso" })
     }
 
+    if (_action === "composition-update-component") {
+
+        const component = jsonParse(values.component) as ProductComponent
+
+        if (!component) {
+            return badRequest({ action: "composition-update-component", message: "Occorreu um erro atualizando o componente" })
+        }
+
+        const componentId = component.product.id
+
+        const [err, data] = await tryit(productEntity.updateComponent(parentProductId, componentId as string, {
+            ...component,
+            unit: values.unit,
+            quantity: toNumber(values.quantity),
+            unitCost: toNumber(values.unitCost),
+        }))
+
+        if (err) {
+            return badRequest({ action: "composition-update-component", message: errorMessage(err) })
+        }
+
+        return ok({ message: "Elemento atualizado com sucesso" })
+
+    }
+
     if (_action === "composition-delete-component") {
 
-        const [err, data] = await tryit(productEntity.removeComponentFromComposition(values.id as string))
+        const component = jsonParse(values.component) as ProductComponent
+
+        if (!component) {
+            return badRequest({ action: "composition-delete-component", message: "Occorreu um erro removendo o componente" })
+        }
+
+        const componentId = component.product.id
+
+        const [err, data] = await tryit(productEntity.removeComponent(parentProductId, componentId as string))
 
         if (err) {
             return badRequest({ action: "composition-delete-component", message: errorMessage(err) })
@@ -55,11 +107,11 @@ export async function action({ request }: ActionArgs) {
 
 export default function SingleProductComposition() {
     const context = useOutletContext<ProductOutletContext>()
-    const product = context.product as ProductWithAssociations
+    const product = context.product as Product
 
     return (
         <div className="flex flex-col gap-8 h-full">
-            <ComponentSelector productId={product.id} />
+            <ComponentSelector parentProductId={product.id} />
             <ProductComponentList />
         </div>
     )
@@ -70,11 +122,11 @@ export default function SingleProductComposition() {
 function ProductComponentList() {
 
     const context = useOutletContext<ProductOutletContext>()
-    const productComposition = context.composition as ProductComponent[]
+    const components = context.product?.components as ProductComponent[]
 
     const formSubmissionState = useFormSubmissionnState()
 
-    if (productComposition.length === 0) {
+    if (components?.length === 0 || !components) {
         return <NoRecordsFound text="Nenhum componente adicionado" />
     }
 
@@ -91,10 +143,10 @@ function ProductComponentList() {
                 ]}
             />
 
-            {productComposition.length > 0 && (
-                productComposition.map((component) => {
+            {components?.length > 0 && (
+                components.map((component) => {
                     return (
-                        <Form method="post" key={component.id || randomReactKey()}>
+                        <Form method="post" key={component.product.id || randomReactKey()}>
                             <TableRow
                                 row={component}
                                 showDateColumns={false}
@@ -103,11 +155,14 @@ function ProductComponentList() {
                             >
 
                                 <div>
-                                    <Input type="hidden" name="id" value={component.id} />
-                                    <Input type="hidden" name="productId" value={component.productId} />
-                                    <Input type="hidden" name="componentId" value={component.componentId} />
-                                    <Input type="hidden" name="componentType" value={component.componentType} />
-                                    <Input name="componentName" readOnly defaultValue={component.name} className="border-none  w-full" />
+                                    <Input type="hidden" name="parentId" value={component.parentId} />
+                                    <Input type="hidden" name="component" value={jsonStringify(component)} readOnly />
+                                    <Tooltip content="Clique para abrir o produto">
+                                        <Link to={`/admin/products/${component.product.id}/info`} target="_blank">
+                                            <span className="font-medium">{component.product.name}</span>
+                                        </Link>
+                                    </Tooltip>
+
                                 </div>
                                 <Select name="unit" defaultValue={component.unit} >
                                     <SelectTrigger>

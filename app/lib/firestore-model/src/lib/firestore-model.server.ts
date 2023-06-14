@@ -1,4 +1,4 @@
-import type { WhereFilterOp } from "firebase/firestore";
+import type { FieldPath, WhereFilterOp } from "firebase/firestore";
 import {
   addDoc,
   collection,
@@ -19,7 +19,7 @@ import type { FirestoreDocument } from "../types";
 import errorMessage from "../utils/error-message";
 
 export type whereCompoundCondition = {
-  field: string;
+  field: string | FieldPath;
   op: WhereFilterOp;
   value: any;
 };

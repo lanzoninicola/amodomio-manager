@@ -7,10 +7,10 @@ import Navbar from "~/components/primitives/navbar/navbar";
 
 
 const navLinks = [
-    { label: "Ingredientes", href: "/admin/ingredients" },
     { label: "Produtos", href: "/admin/products" },
     { label: "Forneçedores", href: "/admin/suppliers" },
     { label: "Categorias", href: "/admin/categories" },
+    { label: "Tamanhos", href: "/admin/sizes" },
 ]
 
 

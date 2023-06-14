@@ -7,27 +7,27 @@ import type { HttpResponse } from "~/utils/http-response.server";
 
 
 
-export default function ProductsOutlet() {
+export default function SizesOutlet() {
     return (
         <Container>
             <div className="flex justify-between items-center mb-4">
                 <h1 className="text-2xl font-bold">
-                    Produtos
+                    Tamanhos
                 </h1>
-                <Link to={`/admin/products/new`}>
+                <Link to={`/admin/sizes/new`}>
                     <Button type="button" className="flex gap-2">
                         <Plus size={16} />
-                        Novo Produto
+                        Novo Tamanho
                     </Button>
                 </Link>
             </div>
             <Outlet />
-            <ProductFormSubmissionAlert />
+            <SizeFormSubmissionAlert />
         </Container>
     )
 }
 
-function ProductFormSubmissionAlert() {
+function SizeFormSubmissionAlert() {
     const actionData = useActionData<HttpResponse | null>()
 
     let errorTitle
