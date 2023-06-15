@@ -1,37 +1,22 @@
 import { serverError } from "~/utils/http-response.server";
 import type { Size } from "./size.model.server";
 import { SizeModel } from "./size.model.server";
+import { BaseEntity } from "../base.entity";
 
-export class SizeEntity {
-  async findAll(): Promise<Size[]> {
-    return await SizeModel.findAll();
+export class CatalogEntity extends BaseEntity<Size> {
+  override async delete(id: string) {
+    // TODO: check if size is being used in a catalog
+
+    return await SizeModel.delete(id);
   }
 
-  async findById(id: string): Promise<Size | null> {
-    return await SizeModel.findById(id);
-  }
-
-  async create(size: Size): Promise<Size> {
-    this.validate(size);
-    return this.save(size);
-  }
-
-  private async save(size: Size): Promise<Size> {
-    return await SizeModel.add(size);
-  }
-
-  async update(id: string, size: Size) {
-    this.validate(size);
-    return await SizeModel.update(id, size);
-  }
-
-  async delete(id: string): Promise<void> {
-    await SizeModel.delete(id);
-  }
-
-  private validate(size: Size): void {
+  validate(size: Size): void {
     if (!size.name) {
-      serverError("O nome do tamanho é obrigatório");
+      serverError("O nome do catálogo é obrigatório");
     }
   }
 }
+
+const sizeEntity = new CatalogEntity(SizeModel);
+
+export { sizeEntity };

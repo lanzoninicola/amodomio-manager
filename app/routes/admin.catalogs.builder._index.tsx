@@ -11,7 +11,7 @@ import { catalogEntity } from "~/domain/catalog/catalog.entity.server";
 import type { Catalog, CatalogType } from "~/domain/catalog/catalog.model.server";
 import { categoryEntity } from "~/domain/category/category.entity.server";
 import { ProductEntity } from "~/domain/product/product.entity";
-import { SizeEntity } from "~/domain/size/size.entity.server";
+import { sizeEntity } from "~/domain/size/size.entity.server";
 import errorMessage from "~/utils/error-message";
 import { badRequest, ok } from "~/utils/http-response.server";
 import tryit from "~/utils/try-it";
@@ -27,7 +27,6 @@ export async function loader() {
         op: "==",
         value: "pizza"
     }])
-    const sizeEntity = new SizeEntity()
     const sizes = await sizeEntity.findAll()
     const categories = await categoryEntity.findAll()
 

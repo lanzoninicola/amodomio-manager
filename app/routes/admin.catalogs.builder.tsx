@@ -5,7 +5,7 @@ import { categoryEntity } from "~/domain/category/category.entity.server";
 import type { Category } from "~/domain/category/category.model.server";
 import { ProductEntity } from "~/domain/product/product.entity";
 import type { Product } from "~/domain/product/product.model.server";
-import { SizeEntity } from "~/domain/size/size.entity.server";
+import { sizeEntity } from "~/domain/size/size.entity.server";
 import type { Size } from "~/domain/size/size.model.server";
 import { ok } from "~/utils/http-response.server";
 
@@ -19,7 +19,6 @@ export async function loader() {
         op: "==",
         value: "pizza"
     }])
-    const sizeEntity = new SizeEntity()
     const sizes = await sizeEntity.findAll()
     const categories = await categoryEntity.findAll()
 

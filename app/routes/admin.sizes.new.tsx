@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "~/components/ui/card";
 import Fieldset from "~/components/ui/fieldset";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { SizeEntity } from "~/domain/size/size.entity.server";
+import { sizeEntity } from "~/domain/size/size.entity.server";
 import type { Size } from "~/domain/size/size.model.server";
 import errorMessage from "~/utils/error-message";
 import { badRequest } from "~/utils/http-response.server";
@@ -16,7 +16,6 @@ import tryit from "~/utils/try-it";
 export async function action({ request }: ActionArgs) {
     let formData = await request.formData();
     const { _action, ...values } = Object.fromEntries(formData);
-    const sizeEntity = new SizeEntity()
 
     if (_action === "size-create") {
 

@@ -1,18 +1,16 @@
-import { useLoaderData, useNavigation, Form, Link } from "@remix-run/react"
-import { Edit } from "lucide-react"
+import { useLoaderData, useNavigation, Form } from "@remix-run/react"
 import Container from "~/components/layout/container/container"
 import NoRecordsFound from "~/components/primitives/no-records-found/no-records-found"
 import { TableTitles, TableRows, TableRow, Table, EditItemButton } from "~/components/primitives/table-list"
-import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
-import { SizeEntity } from "~/domain/size/size.entity.server"
+import { sizeEntity } from "~/domain/size/size.entity.server"
 import type { Size } from "~/domain/size/size.model.server"
 import { ok, serverError } from "~/utils/http-response.server"
 import tryit from "~/utils/try-it"
 
 
 export async function loader() {
-    const sizeEntity = new SizeEntity()
+
     const [err, sizes] = await tryit(sizeEntity.findAll())
     if (err) {
         return serverError({ message: err.message })
