@@ -96,7 +96,7 @@ export default function SingleProductMenu() {
 
                         <Fieldset>
                             <div className="flex justify-between items-center">
-                                <FormLabel disabled={showOnProductMenu === false} htmlFor="category" disabled={showOnProductMenu === false}>
+                                <FormLabel disabled={showOnProductMenu === false} htmlFor="category">
                                     Categoria
                                 </FormLabel>
                                 <div className="w-[300px]">
