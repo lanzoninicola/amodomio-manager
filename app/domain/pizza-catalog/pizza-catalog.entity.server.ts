@@ -38,6 +38,29 @@ export interface PizzaToppingCatalog {
 }
 
 class PizzaCatalogEntity extends CatalogEntity {
+  async getProducts(catalogId: string) {
+    const catalog = (await this.findById(catalogId)) as PizzaCatalog;
+
+    if (!catalog) {
+      return badRequest("Catálogo não encontrado");
+    }
+
+    const items = catalog.items || [];
+
+    const pizzaCatalogItems = items as PizzaCatalogItem[];
+
+    const products = pizzaCatalogItems.map((item) => {
+      const product = item.product;
+
+      return {
+        id: product.id,
+        sizes: product.sizes,
+      };
+    });
+
+    return products;
+  }
+
   async bindSizeToProductCatalog(
     catalogId: string,
     productId: string,
@@ -79,10 +102,7 @@ class PizzaCatalogEntity extends CatalogEntity {
     catalogId: string,
     productId: string,
     sizeId: string,
-    toppingId: string,
-    categoryId: string,
-    unitPrice: number,
-    unitPromotionalPrice: number
+    toppingCatalog: PizzaToppingCatalog
   ) {
     const catalog = (await this.findById(catalogId)) as PizzaCatalog;
 
@@ -104,13 +124,21 @@ class PizzaCatalogEntity extends CatalogEntity {
           return size;
         }
 
+        const toppingExists = size.toppings?.some(
+          (topping) => topping.id === toppingCatalog.id
+        );
+
+        if (toppingExists) {
+          return size;
+        }
+
         const toppings: PizzaToppingCatalog[] = size.toppings || [];
 
         const newTopping: PizzaToppingCatalog = {
-          id: toppingId,
-          categoryId,
-          unitPrice,
-          unitPromotionalPrice,
+          id: toppingCatalog.id,
+          categoryId: toppingCatalog.categoryId,
+          unitPrice: toppingCatalog.unitPrice,
+          unitPromotionalPrice: toppingCatalog.unitPromotionalPrice,
         };
 
         toppings.push(newTopping);

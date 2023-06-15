@@ -5,6 +5,7 @@ interface TableRowProps {
   row: any;
   children: React.ReactNode;
   isProcessing?: boolean;
+  isError?: boolean;
   clazzName?: string;
   dateColumnsCondensed?: boolean;
   showDateColumns?: boolean;
@@ -14,6 +15,7 @@ export default function TableRow({
   row,
   children,
   isProcessing,
+  isError,
   clazzName,
   dateColumnsCondensed,
   showDateColumns = true,
@@ -32,12 +34,14 @@ export default function TableRow({
     />
   )
 
+  let rowStyle = `cursor-pointer w-full grid gap-x-6 p-2 mb-2 text-sm items-center hover:bg-gray-200 border-b-2 border-b-gray-50 ${clazzName}`
+  rowStyle = isProcessing ? `${rowStyle} opacity-25` : rowStyle
+  rowStyle = isError ? `${rowStyle} bg-red-100` : rowStyle
 
   return (
     <li
       data-element="table-row"
-      className={`${isProcessing ? "opacity-25" : ""
-        } cursor-pointer w-full grid gap-x-6 p-2 mb-2 text-sm items-center hover:bg-gray-200 border-b-2 border-b-gray-50 ${clazzName}`}
+      className={rowStyle}
     >
       {children}
       {showDateColumns === true && dateColumns}

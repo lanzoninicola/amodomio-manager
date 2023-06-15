@@ -1,5 +1,5 @@
 import { type ActionArgs } from "@remix-run/node";
-import { Form, useNavigation, useOutletContext, useSearchParams } from "@remix-run/react";
+import { Form, useActionData, useNavigation, useOutletContext, useSearchParams } from "@remix-run/react";
 import { Check } from "lucide-react";
 import { Table, TableRow, TableRows, TableTitles } from "~/components/primitives/table-list";
 import Tooltip from "~/components/primitives/tooltip/tooltip";
@@ -9,12 +9,13 @@ import { Input } from "~/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import type { Category, CategoryMenu } from "~/domain/category/category.model.server";
 import errorMessage from "~/utils/error-message";
+import type { HttpResponse } from "~/utils/http-response.server";
 import { badRequest, ok } from "~/utils/http-response.server";
 import { jsonParse, jsonStringify } from "~/utils/json-helper";
 import toNumber from "~/utils/to-number";
 import tryit from "~/utils/try-it";
 import type { CatalogBuilderOutletContext } from "./admin.catalogs.builder";
-import { pizzaCatalogEntity } from "~/domain/pizza-catalog/pizza-catalog.entity.server";
+import { PizzaToppingCatalog, pizzaCatalogEntity } from "~/domain/pizza-catalog/pizza-catalog.entity.server";
 import type { Topping } from "~/domain/pizza/pizza.entity.server";
 
 
@@ -30,34 +31,51 @@ export async function action({ request }: ActionArgs) {
         const productId = values.productId as string
         const sizeId = values.sizeId as string
         const topping = jsonParse(values.topping as string) as Topping
-        const category = jsonParse(values.category as string) as CategoryMenu
+        const categoryId = values.categoryId
 
-        const unitPrice = toNumber(values.unitPrice as string)
-        const unitPromotionalPrice = toNumber(values.unitPromotionPrice as string)
-
-        if (!topping) {
-            return badRequest({ action: "catalog-create-add-topping", message: "Nenhum sabor foi selecionado" })
+        const toppingCatalog = {
+            id: topping.id as string,
+            categoryId: categoryId as string,
+            unitPrice: toNumber(values.unitPrice as string),
+            unitPromotionalPrice: toNumber(values.unitPromotionPrice as string),
         }
 
-        if (!category) {
-            return badRequest({ action: "catalog-create-add-topping", message: "Nenhuma categoria foi selecionada" })
+        const errorPayload = {
+            message: "Nenhum sabor foi selecionado",
+            payload: {
+                action: "catalog-create-add-topping",
+                toppingCatalog
+            }
+        }
+
+        if (!topping) {
+            return badRequest(errorPayload)
+        }
+
+        if (!categoryId) {
+            return badRequest(errorPayload)
         }
 
         const [err, data] = await tryit(pizzaCatalogEntity.addToppingToCatalog(
             catalogId,
             productId,
             sizeId,
-            topping.id as string,
-            category.id as string,
-            unitPrice,
-            unitPromotionalPrice
+            toppingCatalog
         ))
 
         if (err) {
-            return badRequest({ action: "catalog-create-add-topping", message: errorMessage(err) })
+            return badRequest({
+                message: errorMessage(err),
+                payload: {
+                    action: "catalog-create-add-topping",
+                    toppingCatalog,
+                }
+            })
         }
 
-        return ok({ topping: topping })
+        return ok({
+            toppingCatalog
+        })
     }
 
     return null
@@ -119,14 +137,28 @@ function ToppingTableRows({ topping, clazzName }: ToppingTableRowsProps) {
     const productId = searchParams.get("productId") as string
     const sizeId = searchParams.get("sizeId") as string
 
+    // after submit we need to update the category of the topping
+    const actionData = useActionData<HttpResponse | undefined>()
+
+    let isFormSubmissionError
+    let toppingCatalog = actionData?.payload.toppingCatalog
+
+
+    if (actionData && actionData.status !== 200) {
+        isFormSubmissionError = true
+    }
+
+
 
     return (
         <Form method="post" >
             <TableRow
                 row={topping}
                 isProcessing={navigation.state !== "idle"}
-                clazzName={`${clazzName} `}
+                isError={isFormSubmissionError && toppingCatalog?.id === topping.id}
+                clazzName={`${clazzName}`}
                 showDateColumns={false}
+
             >
                 <div className="flex justify-center">
                     <Tooltip content="Editar">
@@ -142,7 +174,7 @@ function ToppingTableRows({ topping, clazzName }: ToppingTableRowsProps) {
                     <Input type="hidden" name="topping" value={jsonStringify(topping)} />
                     <Input name="topping-name" defaultValue={topping.name} className="border-none w-full" readOnly />
                 </div>
-                <Select name="category" defaultValue={jsonStringify(topping.menu?.category)}>
+                <Select name="categoryId" defaultValue={toppingCatalog?.categoryId}>
                     <SelectTrigger>
                         <SelectValue placeholder="Categoria" className="text-xs text-muted" />
                     </SelectTrigger>
@@ -150,7 +182,7 @@ function ToppingTableRows({ topping, clazzName }: ToppingTableRowsProps) {
                         <SelectGroup>
                             {categories && categories.map(c => {
                                 return (
-                                    <SelectItem key={c.id} value={jsonStringify(c) ?? ""}>
+                                    <SelectItem key={c.id} value={c.id ?? ""}>
                                         {c.name}
                                     </SelectItem>
                                 )
