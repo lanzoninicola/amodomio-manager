@@ -17,7 +17,7 @@ export async function loader() {
     const products = await productEntity.findAll([{
         field: "info.type",
         op: "==",
-        value: "manufactured"
+        value: "pizza"
     }])
     const sizeEntity = new SizeEntity()
     const sizes = await sizeEntity.findAll()
@@ -26,7 +26,7 @@ export async function loader() {
     const toppings = await productEntity.findAll([{
         field: "info.type",
         op: "==",
-        value: "group"
+        value: "topping"
     }])
 
 

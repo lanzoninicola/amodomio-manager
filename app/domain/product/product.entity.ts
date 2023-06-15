@@ -37,7 +37,7 @@ export class ProductEntity {
 
   async delete(id: string) {
     // TODO: check if product is being used in a catalog
-    // TODO: check if product is a kit or group or manufactured product
+    // TODO: check if product is a topping or pizza product
     // TODO: check if product is a component of another product
     // TODO: check if product is inside an order
 
@@ -120,16 +120,14 @@ export class ProductEntity {
 
   static getProductTypeValues(type: ProductInfo["type"] | null | undefined) {
     switch (type) {
-      case "manufactured":
-        return "Fabricado";
-      case "raw_material":
-        return "Materia prima";
-      case "kit":
-        return "Kit";
-      case "group":
-        return "Grupo de produtos";
-      case "semi_manufactured":
-        return "Semi-manufaturado";
+      case "pizza":
+        return "Pizza";
+      case "ingredient":
+        return "Ingrediente";
+      case "topping":
+        return "Sabor";
+      case "prepared":
+        return "Preparado";
       case "simple":
         return "Simples";
       case null:
@@ -142,11 +140,10 @@ export class ProductEntity {
 
   static getProductTypeRawValues(): { value: ProductType; label: string }[] {
     return [
-      { value: "manufactured", label: "Fabricado" },
-      { value: "raw_material", label: "Materia prima" },
-      { value: "kit", label: "Kit" },
-      { value: "group", label: "Grupo de produtos" },
-      { value: "semi_manufactured", label: "Semi-manufaturado" },
+      { value: "pizza", label: "Pizza" },
+      { value: "ingredient", label: "Ingrediente" },
+      { value: "topping", label: "Sabor" },
+      { value: "prepared", label: "Preparado" },
       { value: "simple", label: "Simples" },
     ];
   }

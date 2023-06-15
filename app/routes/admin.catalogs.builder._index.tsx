@@ -1,28 +1,19 @@
 import { redirect, type ActionArgs } from "@remix-run/node";
-import { Form, useLoaderData, useNavigation, useOutletContext, useSearchParams } from "@remix-run/react";
-import { Check } from "lucide-react";
+import { Form, useOutletContext, useSearchParams } from "@remix-run/react";
 import { FormLabel } from "~/components/layout/form";
 import SubmitButton from "~/components/primitives/submit-button/submit-button";
-import { Table, TableRow, TableRows, TableTitles } from "~/components/primitives/table-list";
-import Tooltip from "~/components/primitives/tooltip/tooltip";
-import { Button } from "~/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "~/components/ui/card";
 import Fieldset from "~/components/ui/fieldset";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { catalogEntity } from "~/domain/catalog/catalog.entity.server";
-import type { Catalog, CatalogType, PizzasCatalogItem, Topping } from "~/domain/catalog/catalog.model.server";
+import type { Catalog, CatalogType } from "~/domain/catalog/catalog.model.server";
 import { categoryEntity } from "~/domain/category/category.entity.server";
-import type { Category } from "~/domain/category/category.model.server";
 import { ProductEntity } from "~/domain/product/product.entity";
-import type { Product } from "~/domain/product/product.model.server";
 import { SizeEntity } from "~/domain/size/size.entity.server";
-import type { Size } from "~/domain/size/size.model.server";
 import errorMessage from "~/utils/error-message";
 import { badRequest, ok } from "~/utils/http-response.server";
-import { jsonParse, jsonStringify } from "~/utils/json-helper";
-import toNumber from "~/utils/to-number";
 import tryit from "~/utils/try-it";
 import type { CatalogBuilderOutletContext } from "./admin.catalogs.builder";
 
@@ -34,7 +25,7 @@ export async function loader() {
     const products = await productEntity.findAll([{
         field: "info.type",
         op: "==",
-        value: "manufactured"
+        value: "pizza"
     }])
     const sizeEntity = new SizeEntity()
     const sizes = await sizeEntity.findAll()
@@ -43,7 +34,7 @@ export async function loader() {
     const toppings = await productEntity.findAll([{
         field: "info.type",
         op: "==",
-        value: "group"
+        value: "topping"
     }])
 
 
@@ -68,7 +59,7 @@ export async function action({ request }: ActionArgs) {
             return badRequest({ action: "catalog-create", message: errorMessage(err) })
         }
 
-        return redirect(`/admin/catalogs/builder?catalogId=${data.id}&step=product-select`)
+        return redirect(`/admin/catalogs/builder/product?catalogId=${data.id}`)
     }
 
 

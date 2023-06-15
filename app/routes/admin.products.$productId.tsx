@@ -79,7 +79,7 @@ export default function SingleProduct() {
                 </Link >
 
                 {
-                    (productType === "kit" || productType === "manufactured" || productType === "group") &&
+                    (productType === "pizza" || productType === "topping") &&
                     <Link to={`/admin/products/${productId}/components`} className="w-full text-center">
                         <div className={`${activeTab === "components" && activeTabStyle} ${activeTab}`}>
                             <span>Componentes</span>
@@ -93,7 +93,7 @@ export default function SingleProduct() {
                     </div>
                 </Link >
                 {
-                    (productType === "kit" || productType === "manufactured" || productType === "simple") &&
+                    (productType === "pizza" || productType === "simple") &&
                     <Link to={`/admin/products/${productId}/menu`} className="w-full text-center">
                         <div className={`${activeTab === "menu" && activeTabStyle} ${activeTab}`}>
                             <span>Cardápio</span>

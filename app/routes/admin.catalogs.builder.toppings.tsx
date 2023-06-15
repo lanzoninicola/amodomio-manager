@@ -7,11 +7,7 @@ import { Button } from "~/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
-import { catalogEntity } from "~/domain/catalog/catalog.entity.server";
-import type { PizzasCatalogItem, Topping } from "~/domain/catalog/catalog.model.server";
-import type { Category } from "~/domain/category/category.model.server";
-import type { Product } from "~/domain/product/product.model.server";
-import type { Size } from "~/domain/size/size.model.server";
+import type { Category, CategoryMenu } from "~/domain/category/category.model.server";
 import errorMessage from "~/utils/error-message";
 import { badRequest, ok } from "~/utils/http-response.server";
 import { jsonParse, jsonStringify } from "~/utils/json-helper";
@@ -19,6 +15,8 @@ import toNumber from "~/utils/to-number";
 import tryit from "~/utils/try-it";
 import type { loader } from "./_index";
 import type { CatalogBuilderOutletContext } from "./admin.catalogs.builder";
+import { pizzaCatalogEntity } from "~/domain/pizza-catalog/pizza-catalog.entity.server";
+import type { Topping } from "~/domain/pizza/pizza.entity.server";
 
 
 export async function action({ request }: ActionArgs) {
@@ -26,26 +24,38 @@ export async function action({ request }: ActionArgs) {
     const { _action, ...values } = Object.fromEntries(formData);
 
 
-    if (_action === "catalog-create-add-pizza") {
+    if (_action === "catalog-create-add-topping") {
         // This action tell us that we are going to add a Pizza into the catalog
 
-        const catalogId = values.parentId as string
+        const catalogId = values.catalogId as string
+        const productId = values.productId as string
+        const sizeId = values.sizeId as string
         const topping = jsonParse(values.topping as string) as Topping
-
-        const pizzaCatalogItem: PizzasCatalogItem = {
-            parentId: catalogId,
-            product: jsonParse(values.product as string) as Product,
-            category: jsonParse(values.category as string) ?? {} as Category,
-            size: jsonParse(values.size as string) as Size,
-            topping: topping,
+        const category = jsonParse(values.category as string) as CategoryMenu
+        const sellPrice = {
             unitPrice: toNumber(values.unitPrice as string),
-            unitPromotionPrice: toNumber(values.unitPromotionPrice as string),
+            unitPromotionalPrice: toNumber(values.unitPromotionPrice as string),
         }
 
-        const [err, data] = await tryit(catalogEntity.addProductToCatalog(catalogId, pizzaCatalogItem))
+        if (!topping) {
+            return badRequest({ action: "catalog-create-add-topping", message: "Nenhum sabor foi selecionado" })
+        }
+
+        if (!category) {
+            return badRequest({ action: "catalog-create-add-topping", message: "Nenhuma categoria foi selecionada" })
+        }
+
+        const [err, data] = await tryit(pizzaCatalogEntity.addToppingToCatalog(
+            catalogId,
+            productId,
+            sizeId,
+            topping,
+            category,
+            sellPrice
+        ))
 
         if (err) {
-            return badRequest({ action: "catalog-create-add-pizza", message: errorMessage(err) })
+            return badRequest({ action: "catalog-create-add-topping", message: errorMessage(err) })
         }
 
         return ok({ topping: topping })
@@ -100,21 +110,15 @@ interface ToppingTableRowsProps {
 }
 
 function ToppingTableRows({ topping, clazzName }: ToppingTableRowsProps) {
-    const loaderData = useLoaderData<typeof loader>()
-    const products = loaderData.payload.products as Product[] || []
-    const categories = loaderData.payload.categories as Category[] || []
-    const sizes = loaderData.payload.sizes as Size[] || []
+    const navigation = useNavigation()
+
+    const context = useOutletContext<CatalogBuilderOutletContext>()
+    const categories = context.categories as Category[] || []
 
     const [searchParams, setSearchParams] = useSearchParams()
-    const catalogId = searchParams.get("catalogId")
-    const productId = searchParams.get("productId")
-    const sizeId = searchParams.get("sizeId")
-
-
-    const productSelected = products.find((p) => p.id === productId)
-    const sizeSelected = sizes.find((s) => s.id === sizeId)
-
-    const navigation = useNavigation()
+    const catalogId = searchParams.get("catalogId") as string
+    const productId = searchParams.get("productId") as string
+    const sizeId = searchParams.get("sizeId") as string
 
 
     return (
@@ -127,19 +131,19 @@ function ToppingTableRows({ topping, clazzName }: ToppingTableRowsProps) {
             >
                 <div className="flex justify-center">
                     <Tooltip content="Editar">
-                        <Button type="submit" size="sm" name="_action" value="catalog-create-add-pizza" >
+                        <Button type="submit" size="sm" name="_action" value="catalog-create-add-topping" >
                             <Check size={16} />
                         </Button>
                     </Tooltip>
                 </div>
                 <div>
-                    <Input type="hidden" name="parentId" value={catalogId ?? ""} />
-                    <Input type="hidden" name="product" value={jsonStringify(productSelected)} />
-                    <Input type="hidden" name="size" value={jsonStringify(sizeSelected)} />
+                    <Input type="hidden" name="catalogId" value={catalogId} />
+                    <Input type="hidden" name="productId" value={productId} />
+                    <Input type="hidden" name="sizeId" value={sizeId} />
                     <Input type="hidden" name="topping" value={jsonStringify(topping)} />
                     <Input name="topping-name" defaultValue={topping.name} className="border-none w-full" readOnly />
                 </div>
-                <Select name="category">
+                <Select name="category" defaultValue={jsonStringify(topping.menu?.category)}>
                     <SelectTrigger>
                         <SelectValue placeholder="Categoria" className="text-xs text-muted" />
                     </SelectTrigger>

@@ -2,6 +2,7 @@ import { createFirestoreModel } from "~/lib/firestore-model/src";
 import type { Product, ProductInfo } from "../product/product.model.server";
 import type { Size } from "../size/size.model.server";
 import type { Category } from "../category/category.model.server";
+import type { Pizza } from "../pizza/pizza.entity.server";
 
 export type CatalogType = "pizza" | "drinks" | "combo" | "promo";
 
@@ -13,26 +14,19 @@ export interface Catalog {
 }
 
 export interface CatalogItem {
-  parentId?: Catalog["id"];
+  catalogId?: Catalog["id"];
   product: Product;
-  category: Category;
-  unitPrice: number;
-  unitPromotionPrice?: number;
 }
 
-export interface PizzasCatalog extends Catalog {}
+// PIZZA CATALOG //
+export type PizzaCatalog = Omit<Catalog, "items"> & {
+  type: "pizza";
+  // array of Product with the pizza attributes (sizes, toppings)
+  items?: PizzaCatalogItem[];
+};
 
-interface ToppingInfo extends ProductInfo {
-  type: "semi_manufactured";
-}
-
-export interface Topping extends Product {
-  info: ToppingInfo;
-}
-
-export interface PizzasCatalogItem extends CatalogItem {
-  size: Size;
-  topping: Topping;
+export interface PizzaCatalogItem extends CatalogItem {
+  product: Pizza;
 }
 
 const CatalogModel = createFirestoreModel<Catalog>("catalogs");

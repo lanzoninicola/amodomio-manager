@@ -5,23 +5,31 @@ import { Card, CardHeader, CardTitle, CardContent } from "~/components/ui/card";
 import Fieldset from "~/components/ui/fieldset";
 import { Input } from "~/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
-import type { Size } from "~/domain/size/size.model.server";
 import { jsonParse, jsonStringify } from "~/utils/json-helper";
 import type { CatalogBuilderOutletContext } from "./admin.catalogs.builder";
+import errorMessage from "~/utils/error-message";
+import { badRequest } from "~/utils/http-response.server";
+import tryit from "~/utils/try-it";
+import { pizzaCatalogEntity } from "~/domain/pizza-catalog/pizza-catalog.entity.server";
+import type { PizzaSizeVariation } from "~/domain/pizza/pizza.entity.server";
 
 
 export async function action({ request }: ActionArgs) {
     let formData = await request.formData();
     const { _action, ...values } = Object.fromEntries(formData);
 
-
-
     if (_action === "catalog-create-size-selected") {
         const catalogId = values.id as string
         const productId = values.productId as string
-        const size = jsonParse(values.size as string) as Size
+        const size = jsonParse(values.size as string) as PizzaSizeVariation
 
-        return redirect(`/admin/catalogs/builder?catalogId=${catalogId}&productId=${productId}&sizeId=${size.id}&step=toppings-select`)
+        const [err, data] = await tryit(pizzaCatalogEntity.bindSizeToProductCatalog(catalogId, productId, size))
+
+        if (err) {
+            return badRequest({ action: "catalog-create", message: errorMessage(err) })
+        }
+
+        return redirect(`/admin/catalogs/builder/toppings?catalogId=${catalogId}&productId=${productId}&sizeId=${size.id}`)
     }
 
     return null

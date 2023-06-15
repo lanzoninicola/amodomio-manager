@@ -111,11 +111,10 @@ interface ProductTypeBadgeProps {
 function ProductTypeBadge({ type }: ProductTypeBadgeProps) {
 
     const backgroundColor = {
-        manufactured: "bg-green-100",
-        group: "bg-blue-100",
-        kit: "bg-blue-100",
-        "raw_material": "bg-gray-100",
-        "semi_manufactured": "bg-gray-100",
+        pizza: "bg-green-100",
+        topping: "bg-blue-100",
+        "ingredient": "bg-gray-100",
+        "prepared": "bg-gray-100",
         simple: "bg-green-100",
     }
 

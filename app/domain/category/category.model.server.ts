@@ -3,7 +3,7 @@ import { createFirestoreModel } from "~/lib/firestore-model/src";
 interface Category {
   id?: string;
   name: string;
-  type: "group" | "menu";
+  type: "topping" | "menu";
 }
 
 interface CategoryMenu extends Category {

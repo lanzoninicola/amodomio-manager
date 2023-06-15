@@ -84,13 +84,13 @@ export default function SingleProductInformation() {
                                             })}
                                         </SelectGroup>
                                     </SelectContent>
-                                    <div className="flex gap-2 items-start">
+                                    {/* <div className="flex gap-2 items-start">
                                         <Info size={24} />
                                         <p className="text-xs text-muted-foreground">
                                             <span className="text-xs text-muted-foreground font-semibold">Kit vs Fabricado:{" "}</span>
                                             diferente do fabricado, os componentes de um kit podem ser vendidos separadamente
                                         </p>
-                                    </div>
+                                    </div> */}
                                 </Select>
                             </div>
                         </div>

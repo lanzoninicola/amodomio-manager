@@ -1,14 +1,10 @@
-import { serverError } from "~/utils/http-response.server";
-import type {
-  Catalog,
-  CatalogItem,
-  CatalogType,
-  PizzasCatalogItem,
-} from "./catalog.model.server";
+import { badRequest, serverError } from "~/utils/http-response.server";
+import type { Catalog, CatalogType } from "./catalog.model.server";
 import { CatalogModel } from "./catalog.model.server";
 import { BaseEntity } from "../base.entity";
+import type { Product } from "../product/product.model.server";
 
-class CatalogEntity extends BaseEntity<Catalog> {
+export class CatalogEntity extends BaseEntity<Catalog> {
   getCatalogTypes(): CatalogType[] {
     return ["pizza", "drinks", "combo", "promo"];
   }
@@ -19,37 +15,32 @@ class CatalogEntity extends BaseEntity<Catalog> {
     return await CatalogModel.delete(id);
   }
 
-  async addProductToCatalog(
-    catalogId: string,
-    item: CatalogItem | PizzasCatalogItem
-  ) {
+  async addProductToCatalog(catalogId: string, product: Product) {
     const catalog = await this.findById(catalogId);
     const items = catalog?.items || [];
-    items.push(item);
+
+    const updatedItems = [
+      ...items,
+      {
+        parentId: catalogId,
+        product: product,
+      },
+    ];
 
     return await this.update(catalogId, {
-      items: items,
+      items: updatedItems,
     });
   }
 
-  async updateProductOnPizzaCatalog(
-    catalogId: string,
-    updatedData: PizzasCatalogItem
-  ) {
+  async updateProductToCatalog(catalogId: string, product: Product) {
     const catalog = await this.findById(catalogId);
     const items = catalog?.items || [];
 
-    const pizzaCatalogItems = items as PizzasCatalogItem[];
-    const pizzaCatalogUpdatedItem = updatedData as PizzasCatalogItem;
-
-    const updatedPizzaItem = pizzaCatalogItems.map((item) => {
-      if (
-        item.product.id === pizzaCatalogUpdatedItem.product.id &&
-        item.topping.id === pizzaCatalogUpdatedItem.topping.id
-      ) {
+    const updatedItems = items.map((item) => {
+      if (item.product.id === product.id) {
         return {
           ...item,
-          ...updatedData,
+          product: product,
         };
       }
 
@@ -57,31 +48,26 @@ class CatalogEntity extends BaseEntity<Catalog> {
     });
 
     return await this.update(catalogId, {
-      items: updatedPizzaItem,
+      items: updatedItems,
     });
   }
 
-  async updateProductCatalog(catalogId: string, updatedData: CatalogItem) {
+  async removeProductFromCatalog(catalogId: string, productId: string) {
     const catalog = await this.findById(catalogId);
-    const items = catalog?.items || [];
 
-    const catalogItems = items as CatalogItem[];
+    if (!catalog) {
+      return badRequest("Catálogo não encontrado");
+    }
 
-    const updatedCatalogItem = catalogItems.map((item) => {
-      if (item.product.id === updatedData.product.id) {
-        return {
-          ...item,
-          ...updatedData,
-        };
-      }
+    const items = catalog.items || [];
 
-      return item;
-    });
+    const updatedItems = items.filter((item) => item.product.id !== productId);
 
     return await this.update(catalogId, {
-      items: updatedCatalogItem,
+      items: updatedItems,
     });
   }
+
   validate(catalog: Catalog): void {
     if (!catalog.name) {
       serverError("O nome do catálogo é obrigatório");

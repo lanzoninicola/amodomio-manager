@@ -8,6 +8,10 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import type { Product } from "~/domain/product/product.model.server";
 import { jsonParse, jsonStringify } from "~/utils/json-helper";
 import type { CatalogBuilderOutletContext } from "./admin.catalogs.builder";
+import { catalogEntity } from "~/domain/catalog/catalog.entity.server";
+import errorMessage from "~/utils/error-message";
+import { badRequest } from "~/utils/http-response.server";
+import tryit from "~/utils/try-it";
 
 
 
@@ -20,7 +24,14 @@ export async function action({ request }: ActionArgs) {
         const catalogId = values.id as string
         const product = jsonParse(values.product as string) as Product
 
-        return redirect(`/admin/catalogs/builder?catalogId=${catalogId}&productId=${product.id}&step=size-select`)
+        const [err, data] = await tryit(catalogEntity.addProductToCatalog(catalogId, product))
+
+        if (err) {
+            return badRequest({ action: "catalog-create", message: errorMessage(err) })
+        }
+
+
+        return redirect(`/admin/catalogs/builder/size?catalogId=${catalogId}&productId=${product.id}`)
     }
 
 

@@ -22,7 +22,7 @@ export async function loader({ request }: LoaderArgs) {
         {
             field: new FieldPath("info", "type"),
             op: "in",
-            value: ["raw_material", "semi_manufactured"]
+            value: ["ingredient", "prepared"]
         }
     ])
 

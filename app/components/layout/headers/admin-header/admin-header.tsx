@@ -8,7 +8,7 @@ import Navbar from "~/components/primitives/navbar/navbar";
 
 const navLinks = [
     { label: "Cardápio", href: "/admin/menu" },
-    { label: "Catalogo", href: "/admin/catalogs" },
+    { label: "Catálogos", href: "/admin/catalogs" },
     { label: "Produtos", href: "/admin/products" },
     { label: "Forneçedores", href: "/admin/suppliers" },
     { label: "Categorias", href: "/admin/categories" },
