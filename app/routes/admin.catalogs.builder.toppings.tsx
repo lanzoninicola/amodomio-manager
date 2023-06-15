@@ -1,5 +1,5 @@
 import { type ActionArgs } from "@remix-run/node";
-import { Form, useLoaderData, useNavigation, useOutletContext, useSearchParams } from "@remix-run/react";
+import { Form, useNavigation, useOutletContext, useSearchParams } from "@remix-run/react";
 import { Check } from "lucide-react";
 import { Table, TableRow, TableRows, TableTitles } from "~/components/primitives/table-list";
 import Tooltip from "~/components/primitives/tooltip/tooltip";
@@ -13,7 +13,6 @@ import { badRequest, ok } from "~/utils/http-response.server";
 import { jsonParse, jsonStringify } from "~/utils/json-helper";
 import toNumber from "~/utils/to-number";
 import tryit from "~/utils/try-it";
-import type { loader } from "./_index";
 import type { CatalogBuilderOutletContext } from "./admin.catalogs.builder";
 import { pizzaCatalogEntity } from "~/domain/pizza-catalog/pizza-catalog.entity.server";
 import type { Topping } from "~/domain/pizza/pizza.entity.server";
@@ -32,10 +31,9 @@ export async function action({ request }: ActionArgs) {
         const sizeId = values.sizeId as string
         const topping = jsonParse(values.topping as string) as Topping
         const category = jsonParse(values.category as string) as CategoryMenu
-        const sellPrice = {
-            unitPrice: toNumber(values.unitPrice as string),
-            unitPromotionalPrice: toNumber(values.unitPromotionPrice as string),
-        }
+
+        const unitPrice = toNumber(values.unitPrice as string)
+        const unitPromotionalPrice = toNumber(values.unitPromotionPrice as string)
 
         if (!topping) {
             return badRequest({ action: "catalog-create-add-topping", message: "Nenhum sabor foi selecionado" })
@@ -49,9 +47,10 @@ export async function action({ request }: ActionArgs) {
             catalogId,
             productId,
             sizeId,
-            topping,
-            category,
-            sellPrice
+            topping.id as string,
+            category.id as string,
+            unitPrice,
+            unitPromotionalPrice
         ))
 
         if (err) {

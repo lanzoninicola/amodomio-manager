@@ -24,7 +24,7 @@ export async function action({ request }: ActionArgs) {
         const catalogId = values.id as string
         const product = jsonParse(values.product as string) as Product
 
-        const [err, data] = await tryit(catalogEntity.addProductToCatalog(catalogId, product))
+        const [err, data] = await tryit(catalogEntity.addProductToCatalog(catalogId, product.id as string))
 
         if (err) {
             return badRequest({ action: "catalog-create", message: errorMessage(err) })

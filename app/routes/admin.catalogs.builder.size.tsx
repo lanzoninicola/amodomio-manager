@@ -23,7 +23,7 @@ export async function action({ request }: ActionArgs) {
         const productId = values.productId as string
         const size = jsonParse(values.size as string) as PizzaSizeVariation
 
-        const [err, data] = await tryit(pizzaCatalogEntity.bindSizeToProductCatalog(catalogId, productId, size))
+        const [err, data] = await tryit(pizzaCatalogEntity.bindSizeToProductCatalog(catalogId, productId, size.id as string))
 
         if (err) {
             return badRequest({ action: "catalog-create", message: errorMessage(err) })

@@ -15,7 +15,7 @@ export class CatalogEntity extends BaseEntity<Catalog> {
     return await CatalogModel.delete(id);
   }
 
-  async addProductToCatalog(catalogId: string, product: Product) {
+  async addProductToCatalog(catalogId: string, productId: string) {
     const catalog = await this.findById(catalogId);
     const items = catalog?.items || [];
 
@@ -23,29 +23,11 @@ export class CatalogEntity extends BaseEntity<Catalog> {
       ...items,
       {
         parentId: catalogId,
-        product: product,
+        product: {
+          id: productId,
+        },
       },
     ];
-
-    return await this.update(catalogId, {
-      items: updatedItems,
-    });
-  }
-
-  async updateProductToCatalog(catalogId: string, product: Product) {
-    const catalog = await this.findById(catalogId);
-    const items = catalog?.items || [];
-
-    const updatedItems = items.map((item) => {
-      if (item.product.id === product.id) {
-        return {
-          ...item,
-          product: product,
-        };
-      }
-
-      return item;
-    });
 
     return await this.update(catalogId, {
       items: updatedItems,

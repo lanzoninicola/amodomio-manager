@@ -1,24 +1,47 @@
 import { badRequest, serverError } from "~/utils/http-response.server";
-import type {
-  Catalog,
-  PizzaCatalog,
-  PizzaCatalogItem,
-} from "../catalog/catalog.model.server";
 import { CatalogModel } from "../catalog/catalog.model.server";
+import type { Catalog, CatalogItem } from "../catalog/catalog.model.server";
 import { CatalogEntity } from "../catalog/catalog.entity.server";
 import type { LatestSellPrice } from "../sell-price/sell-price.model.server";
 import type { CategoryMenu } from "../category/category.model.server";
 import type {
-  ProductMenu,
-  ProductPricing,
-} from "../product/product.model.server";
-import type { PizzaSizeVariation, Topping } from "../pizza/pizza.entity.server";
+  Pizza,
+  PizzaSizeVariation,
+  Topping,
+} from "../pizza/pizza.entity.server";
+import type { Size } from "../size/size.model.server";
+
+// PIZZA CATALOG //
+export type PizzaCatalog = Omit<Catalog, "items"> & {
+  type: "pizza";
+  // array of Product with the pizza attributes (sizes, toppings)
+  items?: PizzaCatalogItem[];
+};
+
+export interface PizzaCatalogItem extends CatalogItem {
+  product: {
+    id: Pizza["id"];
+    sizes: PizzaSizeVariationsCatalog[];
+  };
+}
+
+export interface PizzaSizeVariationsCatalog {
+  id: Size["id"];
+  toppings: PizzaToppingCatalog[];
+}
+
+export interface PizzaToppingCatalog {
+  id: Topping["id"];
+  categoryId: string;
+  unitPrice: number;
+  unitPromotionalPrice: number;
+}
 
 class PizzaCatalogEntity extends CatalogEntity {
   async bindSizeToProductCatalog(
     catalogId: string,
     productId: string,
-    size: PizzaSizeVariation
+    sizeId: string
   ) {
     const catalog = (await this.findById(catalogId)) as PizzaCatalog;
 
@@ -33,7 +56,13 @@ class PizzaCatalogEntity extends CatalogEntity {
     const updatedPizzaItem = pizzaCatalogItems.map((item) => {
       if (item.product.id === productId) {
         const sizes = item.product.sizes || [];
-        sizes.push(size);
+
+        const newSize: PizzaSizeVariationsCatalog = {
+          id: sizeId,
+          toppings: [],
+        };
+
+        sizes.push(newSize);
 
         item.product.sizes = sizes;
       }
@@ -50,9 +79,10 @@ class PizzaCatalogEntity extends CatalogEntity {
     catalogId: string,
     productId: string,
     sizeId: string,
-    topping: Topping,
-    category: CategoryMenu,
-    sellPrice: LatestSellPrice
+    toppingId: string,
+    categoryId: string,
+    unitPrice: number,
+    unitPromotionalPrice: number
   ) {
     const catalog = (await this.findById(catalogId)) as PizzaCatalog;
 
@@ -67,24 +97,23 @@ class PizzaCatalogEntity extends CatalogEntity {
         return item;
       }
 
-      const sizes: PizzaSizeVariation[] = item.product.sizes || [];
+      const sizes: PizzaSizeVariationsCatalog[] = item.product.sizes || [];
 
       const updatedSizes = sizes.map((size) => {
         if (size.id !== sizeId) {
           return size;
         }
 
-        const toppings: Topping[] = size.toppings || [];
-        // // topping is also a Product //
-        // topping["menu"] = {
-        //   ...(topping["menu"] as ProductMenu),
-        //   category: category,
-        // };
-        // topping["pricing"] = {
-        //   ...(topping["pricing"] as ProductPricing),
-        //   latestSellPrice: sellPrice,
-        // };
-        toppings.push(topping);
+        const toppings: PizzaToppingCatalog[] = size.toppings || [];
+
+        const newTopping: PizzaToppingCatalog = {
+          id: toppingId,
+          categoryId,
+          unitPrice,
+          unitPromotionalPrice,
+        };
+
+        toppings.push(newTopping);
 
         size["toppings"] = toppings;
 
@@ -118,7 +147,7 @@ class PizzaCatalogEntity extends CatalogEntity {
 
     const updatedPizzaItem = pizzaCatalogItems.map((item) => {
       if (item.product.id === productId) {
-        const sizes: PizzaSizeVariation[] = item.product.sizes || [];
+        const sizes: PizzaSizeVariationsCatalog[] = item.product.sizes || [];
         const updatedSizes = sizes.filter((size) => size.id !== sizeId);
         item.product.sizes = updatedSizes;
       }
@@ -149,10 +178,10 @@ class PizzaCatalogEntity extends CatalogEntity {
 
     const updatedPizzaItem = pizzaCatalogItems.map((item) => {
       if (item.product.id === productId) {
-        const sizes: PizzaSizeVariation[] = item.product.sizes || [];
+        const sizes: PizzaSizeVariationsCatalog[] = item.product.sizes || [];
         const updatedSizes = sizes.map((size) => {
           if (size.id === sizeId) {
-            const toppings: Topping[] = size.toppings || [];
+            const toppings: PizzaToppingCatalog[] = size.toppings || [];
             const updatedToppings = toppings.filter(
               (topping) => topping.id !== toppingId
             );
