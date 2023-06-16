@@ -1,24 +1,46 @@
+import type { ActionArgs } from "@remix-run/node"
 import { useLoaderData, Form, Link } from "@remix-run/react"
 import { Edit, MoreHorizontal, PinOff } from "lucide-react"
 import Container from "~/components/layout/container/container"
 import SubmitButton from "~/components/primitives/submit-button/submit-button"
-import { TableTitles, TableRows, TableRow, Table } from "~/components/primitives/table-list"
+import { TableTitles, TableRows, TableRow, Table, DeleteItemButton } from "~/components/primitives/table-list"
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import type { Ingredient } from "~/domain/ingredient/ingredient.entity";
 import { ingredientEntity } from "~/domain/ingredient/ingredient.entity"
 import useFormSubmissionnState from "~/hooks/useFormSubmissionState"
-import { ok, serverError } from "~/utils/http-response.server"
+import errorMessage from "~/utils/error-message"
+import { badRequest, ok, serverError } from "~/utils/http-response.server"
 import tryit from "~/utils/try-it"
 
 
 export async function loader() {
     const [err, ingredients] = await tryit(ingredientEntity.findAll())
     if (err) {
-        return serverError(err)
+        return serverError(errorMessage(err))
     }
 
     return ok({ ingredients })
+}
+
+
+export async function action({ request }: ActionArgs) {
+    let formData = await request.formData();
+    const { _action, ...values } = Object.fromEntries(formData);
+
+
+
+    if (_action === "ingredient-delete") {
+
+        const ingredientId = values.id as string
+
+        const [err, ingredients] = await tryit(ingredientEntity.delete(ingredientId))
+        if (err) {
+            return badRequest(errorMessage(err))
+        }
+    }
+
+    return null
 }
 
 
@@ -74,15 +96,13 @@ function IngredientTableRow({ ingredient, clazzName }: IngredientTableRowProps) 
                 clazzName={`${clazzName}`}
             >
                 <div className="flex gap-2 md:gap-4 items-center">
-                    <Link to={`/admin/ingredients/${ingredient.id}/info`}>
-                        <Button type="button" variant="outline" className="border-black" size={"sm"}>
+
+                    <Link to={`/admin/products/${ingredient.id}/info`}>
+                        <Button type="button" variant="ghost" size={"sm"}>
                             <Edit size={16} />
                         </Button>
                     </Link>
-                    <Button variant="outline" type="submit" name="_action" value="ingredient-disable" className="border-red-500" size={"sm"}>
-                        <PinOff size={16} color="red" />
-                    </Button>
-
+                    <DeleteItemButton actionName="ingredient-delete" />
                 </div>
                 <div>
                     <Input type="hidden" name="id" value={ingredient.id} />

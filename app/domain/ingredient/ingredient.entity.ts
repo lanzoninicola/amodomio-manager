@@ -11,17 +11,42 @@ export interface Ingredient extends Product {
 }
 
 class IngredientEntity extends ProductEntity {
-  override findAll(
+  override async findAll(
     conditions?: whereCompoundConditions | undefined
   ): Promise<Ingredient[]> {
-    return super.findAll([
+    const ingredients = await super.findAll([
       ...(conditions ?? []),
       {
         field: "info.type",
         op: "==",
         value: "ingredient",
       },
-    ]) as Promise<Ingredient[]>;
+    ]);
+
+    // sort by name
+    ingredients.sort((a, b) => {
+      if (a.name < b.name) {
+        return -1;
+      }
+
+      if (a.name > b.name) {
+        return 1;
+      }
+
+      return 0;
+    });
+
+    return ingredients as Ingredient[];
+  }
+
+  override async create(product: Product): Promise<Product> {
+    return await super.create({
+      ...product,
+      info: {
+        ...product.info,
+        type: "ingredient",
+      },
+    });
   }
 }
 

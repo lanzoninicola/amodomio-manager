@@ -44,42 +44,65 @@ function AlertWrapper({ children, timeout, clazzName, buttonClazzName }: AlertWr
 
 interface AlertProps {
     title?: string
-    message?: string
-    timeout?: number
+    message: string
+    duration?: number
 }
 
-export function AlertError({ title, message, timeout }: AlertProps) {
-
-    const { toast } = useToast()
+export function AlertError({ title, message, duration = 8000 }: AlertProps) {
+    const [visible, setVisible] = useState(true);
 
     useEffect(() => {
-        toast({
-            variant: "destructive",
-            title: title || "Erro",
-            description: message || "Um erro ocorreu, tente novamente mais tarde.",
-            duration: timeout || 5000,
-        })
+        const timer = setTimeout(() => {
+            setVisible(false);
+        }, duration);
 
-    }, [message, timeout, title, toast])
+        return () => {
+            clearTimeout(timer);
+        };
+    }, [duration]);
 
-    return null
+    if (!visible) {
+        return null;
+    }
+
+    return (
+        <div className="fixed bottom-2 right-2">
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <div className="flex flex-col gap-2">
+                    <strong className="font-semibold">{title || "Erro!"}</strong>
+                    <span className="block sm:inline">{message}</span>
+                </div>
+            </div>
+        </div>
+    );
 }
 
 
-export function AlertOk({ title, message, timeout }: AlertProps) {
-
-    const { toast } = useToast()
+export function AlertOk({ title, message, duration = 8000 }: AlertProps) {
+    const [visible, setVisible] = useState(true);
 
     useEffect(() => {
-        toast({
-            title: title || "Ok",
-            description: message || "Operação realizada com sucesso.",
-            duration: timeout || 5000,
-        })
+        const timer = setTimeout(() => {
+            setVisible(false);
+        }, duration);
 
-    }, [message, timeout, title, toast])
+        return () => {
+            clearTimeout(timer);
+        };
+    }, [duration]);
 
-    return null
+    if (!visible) {
+        return null;
+    }
 
-
+    return (
+        <div className="fixed bottom-2 md:bottom-4 right-2 md:right-4 bg-white">
+            <div className="shadow-md shadow-muted px-4 py-3 rounded relative" role="alert">
+                <div className="flex flex-col gap-2">
+                    <strong className="font-semibold">{title || "Ok!"}</strong>
+                    <span className="block sm:inline">{message || "Operação concluida com successo"}</span>
+                </div>
+            </div>
+        </div>
+    );
 }

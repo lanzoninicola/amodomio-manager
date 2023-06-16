@@ -16,6 +16,8 @@ export class ProductEntity {
   }
 
   private async save(product: Product): Promise<Product> {
+    console.log(product);
+
     return await ProductModel.add(product);
   }
 

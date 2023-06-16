@@ -32,9 +32,9 @@ export type ProductType =
   | "prepared"; // semi-manufactured is a product that is bought from a supplier or produced by the company and is used to produce pizza products
 
 export interface ProductInfo {
-  productId: string;
+  productId?: string;
   type: ProductType;
-  description: string;
+  description?: string;
 }
 
 export interface ProductMenu {
