@@ -1,5 +1,5 @@
 import { redirect, type ActionArgs } from "@remix-run/node";
-import { Form, useOutletContext, useSearchParams } from "@remix-run/react";
+import { Form, Outlet, useLoaderData, useOutletContext, useSearchParams } from "@remix-run/react";
 import { FormLabel } from "~/components/layout/form";
 import SubmitButton from "~/components/primitives/submit-button/submit-button";
 import { Card, CardHeader, CardTitle, CardContent } from "~/components/ui/card";
@@ -58,7 +58,7 @@ export async function action({ request }: ActionArgs) {
             return badRequest({ action: "catalog-create", message: errorMessage(err) })
         }
 
-        return redirect(`/admin/catalogs/builder/product?catalogId=${data.id}`)
+        return redirect(`/admin/catalogs`)
     }
 
 
@@ -67,60 +67,59 @@ export async function action({ request }: ActionArgs) {
 
 
 export default function CatalogForm() {
-    const context = useOutletContext<CatalogBuilderOutletContext>()
-    const catalogs = context.catalogs
-    const catalogTypes = context.catalogTypes
-
-    const [searchParams, setSearchParams] = useSearchParams()
-    const catalogId = searchParams.get("catalogId")
-    const catalogEdit = catalogs.find((catalog) => catalog.id === catalogId)
+    const loaderData = useLoaderData<typeof loader>()
+    const catalogTypes = loaderData.payload.catalogTypes as CatalogType[]
 
     return (
-        <Form method="post">
-            <Card className="mb-8">
-                <CardHeader>
-                    <div className="flex justify-between items-center">
-                        <CardTitle>Novo catálogo</CardTitle>
-                        <SubmitButton actionName="catalog-create" className="w-[150px] gap-2" />
-                    </div>
-                </CardHeader>
-                <CardContent className="grid gap-6">
-
-                    <div className="flex flex-wrap justify-between">
-                        <div className="flex flex-col gap-4 mb-4 w-[40%]">
-                            <Input type="hidden" id="id" name="id" defaultValue={catalogEdit?.id} />
-                            <Fieldset>
-                                <FormLabel htmlFor="catalog-type">Tipo</FormLabel>
-                                <Select name="type" defaultValue={catalogEdit?.type} required  >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecionar..." />
-                                    </SelectTrigger>
-                                    <SelectContent  >
-                                        <SelectGroup >
-                                            {catalogTypes.map((type) => {
-                                                return <SelectItem key={type} value={type}>{type}</SelectItem>
-                                            })}
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </Select>
-                            </Fieldset>
-                            <Fieldset>
-                                <Label htmlFor="catalog-name">Nome</Label>
-                                <Input type="text" id="catalog-name" placeholder="Nome" name="name" defaultValue={catalogEdit?.name} required autoComplete="off" />
-                            </Fieldset>
+        <>
+            <Form method="post">
+                <Card className="mb-8">
+                    <CardHeader>
+                        <div className="flex justify-between items-center">
+                            <CardTitle>Novo catálogo</CardTitle>
+                            <SubmitButton actionName="catalog-create" className="w-[150px] gap-2" />
                         </div>
-                        <CatalogListBox />
-                    </div>
-                </CardContent>
-            </Card>
-        </Form >
+                    </CardHeader>
+                    <CardContent className="grid gap-6">
+
+                        <div className="flex flex-wrap justify-between">
+                            <div className="flex flex-col gap-4 mb-4 w-[40%]">
+                                <Input type="hidden" id="id" name="id" />
+                                <Fieldset>
+                                    <FormLabel htmlFor="catalog-type">Tipo</FormLabel>
+                                    <Select name="type" required  >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecionar..." />
+                                        </SelectTrigger>
+                                        <SelectContent  >
+                                            <SelectGroup >
+                                                {catalogTypes.map((type) => {
+                                                    return <SelectItem key={type} value={type}>{type}</SelectItem>
+                                                })}
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                </Fieldset>
+                                <Fieldset>
+                                    <Label htmlFor="catalog-name">Nome</Label>
+                                    <Input type="text" id="catalog-name" placeholder="Nome" name="name" required autoComplete="off" />
+                                </Fieldset>
+                            </div>
+                            <CatalogListBox />
+                        </div>
+                    </CardContent>
+                </Card>
+            </Form >
+            <Outlet />
+        </>
     )
 }
 
 
 function CatalogListBox() {
-    const context = useOutletContext<CatalogBuilderOutletContext>()
-    const catalogs = context.catalogs
+    const loaderData = useLoaderData<typeof loader>()
+    const catalogs = loaderData.payload.catalogs as Catalog[]
+
 
     return (
         <div className="border-2 border-muted rounded-lg p-4 w-[40%]">

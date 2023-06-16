@@ -17,7 +17,7 @@ export default function CatalogsOutlet() {
                 <h1 className="text-2xl font-bold">
                     Catálogos
                 </h1>
-                <Link to={`/admin/catalogs/builder?action=new`}>
+                <Link to={`/admin/catalogs/new`}>
                     <Button type="button" className="flex gap-2">
                         <Plus size={16} />
                         Novo Catálogo

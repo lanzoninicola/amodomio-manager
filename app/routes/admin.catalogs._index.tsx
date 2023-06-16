@@ -94,7 +94,7 @@ function CatalogTableRow({ catalog, clazzName }: CatalogTableRowProps) {
                 clazzName={`${clazzName}`}
             >
                 <div>
-                    <EditItemButton to={`/admin/catalogs/${catalog.id}/items`} />
+                    <EditItemButton to={`/admin/catalogs/builder/${catalog.id}`} />
                     <DeleteItemButton actionName="catalog-delete" />
                 </div>
                 <Input type="hidden" name="id" value={catalog.id} />
