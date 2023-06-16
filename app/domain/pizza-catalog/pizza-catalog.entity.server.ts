@@ -112,18 +112,34 @@ class PizzaCatalogEntity extends CatalogEntity {
 
     const items = catalog.items || [];
     const pizzaCatalogItems = items as PizzaCatalogItem[];
-    const updatedPizzaItem = pizzaCatalogItems.map((item) => {
-      if (item.product.id !== productId) {
-        return item;
-      }
 
+    if (items.length === 0) {
+      const newPizzaCatalogItem: PizzaCatalogItem = {
+        catalogId: catalogId,
+        product: {
+          id: productId,
+          sizes: [
+            {
+              id: sizeId,
+              toppings: [toppingCatalog],
+            },
+          ],
+        },
+      };
+
+      pizzaCatalogItems.push(newPizzaCatalogItem);
+
+      return await this.update(catalogId, {
+        items: pizzaCatalogItems,
+      });
+    }
+
+    const updatedPizzaItem = pizzaCatalogItems.map((item) => {
+      item.catalogId = catalogId;
+      item.product.id = productId;
       const sizes: PizzaSizeVariationsCatalog[] = item.product.sizes || [];
 
       const updatedSizes = sizes.map((size) => {
-        if (size.id !== sizeId) {
-          return size;
-        }
-
         const toppingExists = size.toppings?.some(
           (topping) => topping.id === toppingCatalog.id
         );
@@ -150,6 +166,62 @@ class PizzaCatalogEntity extends CatalogEntity {
 
       item.product.sizes = updatedSizes;
 
+      return item;
+    });
+
+    console.log(updatedPizzaItem);
+
+    return await this.update(catalogId, {
+      items: updatedPizzaItem,
+    });
+  }
+
+  async updateToppingFromCatalog(
+    catalogId: string,
+    productId: string,
+    sizeId: string,
+    toppingCatalog: PizzaToppingCatalog
+  ) {
+    const catalog = (await this.findById(catalogId)) as PizzaCatalog;
+
+    if (!catalog) {
+      return badRequest("Catálogo não encontrado");
+    }
+
+    const items = catalog.items || [];
+
+    const pizzaCatalogItems = items as PizzaCatalogItem[];
+
+    const updatedPizzaItem = pizzaCatalogItems.map((item) => {
+      if (item.product.id !== productId) {
+        return item;
+      }
+
+      const sizes: PizzaSizeVariationsCatalog[] = item.product.sizes || [];
+
+      const updatedSizes = sizes.map((size) => {
+        if (size.id !== sizeId) {
+          return size;
+        }
+
+        const toppings: PizzaToppingCatalog[] = size.toppings || [];
+
+        const updatedToppings = toppings.map((topping) => {
+          if (topping.id !== toppingCatalog.id) {
+            return topping;
+          }
+
+          topping.categoryId = toppingCatalog.categoryId;
+          topping.unitPrice = toppingCatalog.unitPrice;
+          topping.unitPromotionalPrice = toppingCatalog.unitPromotionalPrice;
+          return topping;
+        });
+
+        size.toppings = updatedToppings;
+        return size;
+      });
+
+      item.product.sizes = updatedSizes;
       return item;
     });
 
@@ -229,6 +301,38 @@ class PizzaCatalogEntity extends CatalogEntity {
     return await this.update(catalogId, {
       items: updatedPizzaItem,
     });
+  }
+
+  async getToppingsFromCatalog(
+    catalogId: string,
+    productId: string,
+    sizeId: string
+  ) {
+    const catalog = (await this.findById(catalogId)) as PizzaCatalog;
+
+    if (!catalog) {
+      return badRequest("Catálogo não encontrado");
+    }
+
+    const items = catalog.items || [];
+
+    const pizzaCatalogItems = items as PizzaCatalogItem[];
+
+    const result: PizzaToppingCatalog[] = [];
+
+    pizzaCatalogItems.forEach((item) => {
+      if (item.product.id === productId) {
+        const sizes: PizzaSizeVariationsCatalog[] = item.product.sizes || [];
+        const size = sizes.find((size) => size.id === sizeId);
+
+        if (size) {
+          const toppings: PizzaToppingCatalog[] = size.toppings || [];
+          result.push(...toppings);
+        }
+      }
+    });
+
+    return result;
   }
 
   validate(catalog: Catalog): void {

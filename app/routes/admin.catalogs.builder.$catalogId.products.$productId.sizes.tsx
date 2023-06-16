@@ -1,5 +1,6 @@
 import { Outlet, useLoaderData } from "@remix-run/react";
 import { categoryEntity } from "~/domain/category/category.entity.server";
+import type { Category } from "~/domain/category/category.model.server";
 import type { Topping } from "~/domain/pizza/pizza.entity.server";
 import { ProductEntity } from "~/domain/product/product.entity";
 import type { Size } from "~/domain/size/size.model.server";
@@ -19,9 +20,15 @@ export async function loader() {
 }
 
 
-export default function SizesCatalogBuilder() {
+export interface ToppingSelectionOutletContext {
+    categories: Category[]
+    toppings: Topping[]
+}
+
+
+export default function ToppingSelectionOutlet() {
     const loaderData = useLoaderData<typeof loader>()
-    const categories = loaderData.payload.categories as Size[] || []
+    const categories = loaderData.payload.categories as Category[] || []
     const toppings = loaderData.payload.toppings as Topping[] || []
 
 
