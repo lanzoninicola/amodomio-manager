@@ -111,7 +111,7 @@ export default function SingleProductComposition() {
 
     return (
         <div className="flex flex-col gap-8 h-full">
-            <ComponentSelector parentProductId={product.id} />
+            <ComponentSelector parentId={product.id} />
             <ProductComponentList />
         </div>
     )
