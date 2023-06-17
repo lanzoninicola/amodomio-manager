@@ -4,10 +4,11 @@ import toLowerCase from "~/utils/to-lower-case"
 interface AutoCompleteDropdownProps<T> {
     dataset: T[],
     fieldToSearch: string & keyof T,
-    searchValue: string
+    searchValue: string,
+    title?: string,
 }
 
-export default function AutoCompleteDropdown<T>({ dataset, fieldToSearch, searchValue }: AutoCompleteDropdownProps<T>) {
+export default function AutoCompleteDropdown<T>({ dataset, fieldToSearch, searchValue, title }: AutoCompleteDropdownProps<T>) {
 
     const [show, setShow] = useState(false)
 
@@ -39,13 +40,16 @@ export default function AutoCompleteDropdown<T>({ dataset, fieldToSearch, search
     return (
         <div className="absolute left-0 right-0 z-10 bg-white shadow-md rounded-md px-6 py-4 mt-2"
             onClick={() => setShow(false)}>
-            <ul>
-                {
-                    datasetFiltered.map((item, idx) => (
-                        <li key={idx}>{item[fieldToSearch] as string}</li>
-                    ))
-                }
-            </ul>
+            <div className="flex flex-col gap-2" >
+                {title && <span className="font-semibold text-xs">{title}</span>}
+                <ul>
+                    {
+                        datasetFiltered.map((item, idx) => (
+                            <li key={idx}>{item[fieldToSearch] as string}</li>
+                        ))
+                    }
+                </ul>
+            </div>
         </div>
     )
 }

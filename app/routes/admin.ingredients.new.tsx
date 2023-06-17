@@ -2,7 +2,7 @@
 import type { V2_MetaFunction } from "@remix-run/node";
 import { type ActionArgs } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { AlertError, AlertOk } from "~/components/layout/alerts/alerts";
 import AutoCompleteDropdown from "~/components/primitives/autocomplete-dropdown/autocomplete-dropdown";
 import SubmitButton from "~/components/primitives/submit-button/submit-button";
@@ -80,7 +80,7 @@ export default function SingleIngredientNew() {
                                     onChange={(e) => setIngredientValues(e.target.value)}
                                     ref={inputFocusRef}
                                 />
-                                <AutoCompleteDropdown dataset={ingredients} fieldToSearch={"name"} searchValue={ingredientValues} />
+                                <AutoCompleteDropdown dataset={ingredients} fieldToSearch={"name"} searchValue={ingredientValues} title="O ingrediente já existe" />
                             </div>
                         </Fieldset>
 
