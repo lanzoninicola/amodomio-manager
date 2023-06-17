@@ -13,7 +13,7 @@ import { Label } from "~/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import type { Ingredient } from "~/domain/ingredient/ingredient.entity";
 import { ingredientEntity } from "~/domain/ingredient/ingredient.entity";
-import UnitSelector from "~/domain/product/component/unit-selector";
+import UnitSelector from "~/domain/product/component/unit-selector/unit-selector";
 import type { ProductUnit } from "~/domain/product/product.model.server";
 import useFormResponse from "~/hooks/useFormResponse";
 import errorMessage from "~/utils/error-message";

@@ -1,7 +1,7 @@
 
 import type { V2_MetaFunction } from "@remix-run/node";
-import { type ActionArgs } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
+import { redirect, type ActionArgs } from "@remix-run/node";
+import { Form, useLoaderData, useSearchParams } from "@remix-run/react";
 import { useState } from "react";
 import { AlertError, AlertOk } from "~/components/layout/alerts/alerts";
 import AutoCompleteDropdown from "~/components/primitives/autocomplete-dropdown/autocomplete-dropdown";
@@ -12,13 +12,21 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import type { Topping } from "~/domain/topping/topping.entity";
 import { toppingEntity } from "~/domain/topping/topping.entity";
-import type { ProductUnit } from "~/domain/product/product.model.server";
+import type { ProductComponent, ProductUnit } from "~/domain/product/product.model.server";
 import useFormResponse from "~/hooks/useFormResponse";
 import errorMessage from "~/utils/error-message";
 import { badRequest, ok } from "~/utils/http-response.server";
 import tryit from "~/utils/try-it";
 import Folder from "~/components/primitives/folder/folder";
 import { ComponentSelector } from "./admin.resources.component-selector";
+import type { TabItem } from "~/components/primitives/tabs/tabs";
+import Tabs from "~/components/primitives/tabs/tabs";
+import toLowerCase from "~/utils/to-lower-case";
+import trim from "~/utils/trim";
+import { ProductEntity } from "~/domain/product/product.entity";
+import { jsonParse } from "~/utils/json-helper";
+import { Delete } from "lucide-react";
+import { DeleteItemButton } from "~/components/primitives/table-list";
 
 
 export const meta: V2_MetaFunction = () => {
@@ -42,16 +50,63 @@ export async function action({ request }: ActionArgs) {
     if (_action === "topping-create") {
 
         const [err, data] = await tryit(toppingEntity.create({
-            name: values.name as string,
-            unit: values.unit as ProductUnit,
+            name: trim(values.name as string),
+            unit: "un",
         }))
 
         if (err) {
             return badRequest({ action: "topping-create", message: errorMessage(err) })
         }
 
-        return ok({ ...data, message: "Sabor criado com sucesso" })
+        return redirect(`/admin/toppings/new?tab=component&parentId=${data.id}&name=${data.name}`)
     }
+
+    if (_action === "topping-delete") {
+
+        const [err, data] = await tryit(toppingEntity.delete(values.id as string))
+
+        if (err) {
+            return badRequest({ action: "topping-delete", message: errorMessage(err) })
+        }
+
+        return ok({ message: "Elemento adicionado com sucesso" })
+    }
+
+    const productEntity = new ProductEntity()
+    const parentProductId = values.parentId as string
+
+    if (!parentProductId) {
+        return badRequest({ action: "composition-add-component", message: "O ID do produto não foi informado" })
+    }
+
+    if (_action === "composition-add-component") {
+
+        const component = jsonParse(values.component)
+
+        if (!component) {
+            return badRequest({ action: "composition-add-component", message: "Occorreu um erro adicionando o componente" })
+        }
+
+        const newComponent: ProductComponent = {
+            parentId: parentProductId,
+            product: {
+                id: component.id as string,
+            },
+            quantity: 0,
+            unit: component.unit as ProductUnit,
+            unitCost: 0,
+        }
+
+        const [err, data] = await tryit(productEntity.addComponent(parentProductId, newComponent))
+
+        if (err) {
+            return badRequest({ action: "composition-add-component", message: errorMessage(err) })
+        }
+
+        return ok({ message: "Elemento adicionado com sucesso" })
+    }
+
+    return null
 
 }
 
@@ -62,8 +117,20 @@ export default function SingleToppingNew() {
 
     const [toppingValues, setToppingValues] = useState<Topping["name"]>("")
 
-    const { isError, isOk, errorMessage, formRef, inputFocusRef } = useFormResponse()
+    const { isError, isOk, errorMessage, formRef, data: formResponseData } = useFormResponse()
 
+    // this is used when a sub-component is created,
+    // so we can redirect back here and we repopulate the input with the last value
+    const [searchParam, setSearchParam] = useSearchParams()
+    const toppingName = searchParam.get("name")
+    const currentTab = searchParam.get("tab") ?? "list"
+    const currentToppingId = searchParam.get("parentId")
+
+
+    const tabs: TabItem[] = [
+        { id: "list", name: "Lista" },
+        { id: "component", name: "Componentes" },
+    ]
     return (
         <Card>
             <CardHeader>
@@ -78,8 +145,11 @@ export default function SingleToppingNew() {
                                 <Label htmlFor="product-name">Nome</Label>
                                 <Input type="text" id="product-name" placeholder="Nome sabor" name="name" required
                                     className="w-full text-lg md:text-md" autoComplete="off"
-                                    onChange={(e) => setToppingValues(e.target.value)}
-                                    ref={inputFocusRef}
+                                    onChange={(e) => {
+                                        const toppingName = e.target.value.trim()
+                                        setToppingValues(toppingName)
+                                    }}
+                                    defaultValue={toppingName ?? undefined}
                                 />
                                 <AutoCompleteDropdown dataset={toppings} fieldToSearch={"name"} searchValue={toppingValues} title="O sabor já existe" />
                             </div>
@@ -87,15 +157,28 @@ export default function SingleToppingNew() {
 
                     </div>
                     <div className="flex gap-2 mb-4">
-                        <SubmitButton actionName="topping-create" className="text-lg md:text-md w-full md:w-[150px] gap-2" size={"lg"} />
+                        <SubmitButton
+                            actionName="topping-create"
+                            className="text-lg md:text-md w-full md:w-[150px] gap-2" size={"lg"}
+                            disableLoadingAnimation={currentTab === "component" && currentToppingId !== null}
+                            disabled={currentTab === "component" && currentToppingId !== null}
+                        />
                     </div>
                     <div data-element="form-alert">
                         {isError && (<AlertError message={errorMessage} />)}
-                        {isOk && (<AlertOk message={"Sabor criado com successo"} />)}
+                        {isOk && (<AlertOk message={formResponseData?.message || "Sabor criado com successo"} />)}
                     </div>
                 </Form>
-                <ToppingQuickList />
-                <ComponentSelector parentId={"123"} hideAlphabetSelector={true} />
+                <div>
+                    <Tabs tabs={tabs} />
+                    {currentTab === "list" && <ToppingQuickList />}
+                    {currentTab === "component" && currentToppingId &&
+                        <ComponentSelector
+                            parentId={currentToppingId}
+                            hideAlphabetSelector={true}
+                            newComponentLink={`/admin/products/new?type=ingredient&redirectUrl=/admin/toppings/new?name=${toppingValues}`}
+                        />}
+                </div>
             </CardContent>
         </Card>
     )
@@ -105,20 +188,43 @@ function ToppingQuickList() {
     const loaderData = useLoaderData<typeof loader>()
     const toppings = loaderData.payload.toppings as Topping[] || []
 
+    const [clickedAmount, setClickedAmount] = useState({} as Record<string, number>)
+
     if (!toppings || toppings.length === 0) {
         return null
     }
 
     return (
-        <div className="w-full border-2 border-muted rounded-lg">
-            <Folder title="Sabores cadastrados">
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:w-1/2">
-                    {toppings.map(topping => (
-                        <span key={topping.id} className="text-xs md:text-sm p-1">{topping.name}</span>
-                    ))}
-                </div>
-            </Folder>
-        </div>
+
+        <ul className="grid grid-cols-2 md:grid-cols-4 lg:w-1/2">
+            {toppings.map(topping => {
+                if (!topping.id) return null
+
+                return (
+                    <li key={topping.id} className="bg-secondary mr-2 mb-3 px-2 rounded-md" >
+                        <Form method="post" >
+                            <div className="flex justify-between items-center py-2">
+                                <input type="hidden" name="id" value={topping.id} />
+                                <span className="text-xs md:text-sm" onClick={
+                                    () => {
+                                        if (!topping.id) return
+
+                                        const amount = clickedAmount[topping.id] ?? 0
+                                        if (amount === 2) {
+                                            setClickedAmount({ ...clickedAmount, [topping.id]: 0 })
+                                            return
+                                        }
+                                        setClickedAmount({ ...clickedAmount, [topping.id]: amount + 1 })
+                                    }
+                                }>{topping.name}</span>
+                                {clickedAmount[topping.id] === 2 && <DeleteItemButton iconSize={14} actionName="topping-delete" />}
+                            </div>
+                        </Form>
+
+                    </li>
+                )
+            })}
+        </ul>
     )
 }
 

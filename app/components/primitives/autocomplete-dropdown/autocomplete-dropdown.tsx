@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import toLowerCase from "~/utils/to-lower-case"
 
 interface AutoCompleteDropdownProps<T> {
@@ -12,12 +12,20 @@ export default function AutoCompleteDropdown<T>({ dataset, fieldToSearch, search
 
     const [show, setShow] = useState(false)
 
-    let datasetFiltered = dataset
-        .filter(item => {
-            const itemValue = toLowerCase(item[fieldToSearch]) as string
-            return itemValue.includes(toLowerCase(searchValue))
-        })
 
+    const datasetFiltered = useMemo(
+        () => {
+            if (!dataset) return []
+
+            return dataset.filter(item => {
+                const itemValue = toLowerCase(item[fieldToSearch] as string)
+                const searchValueLowerCase = toLowerCase(searchValue)
+
+                return itemValue.includes(searchValueLowerCase)
+            })
+        },
+        [dataset, fieldToSearch, searchValue]
+    )
 
     useEffect(() => {
         if ((searchValue.length > 0) && datasetFiltered.length > 0) {

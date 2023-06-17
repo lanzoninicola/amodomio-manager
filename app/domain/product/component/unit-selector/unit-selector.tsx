@@ -1,5 +1,6 @@
-import { Label } from "@radix-ui/react-label";
+
 import Fieldset from "~/components/ui/fieldset";
+import { Label } from "~/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 
 

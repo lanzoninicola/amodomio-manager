@@ -16,9 +16,17 @@ import { jsonStringify } from '~/utils/json-helper';
 import toLowerCase from '~/utils/to-lower-case';
 
 export async function loader({ request }: LoaderArgs) {
+    const url = new URL(request.url)
+    const parentId = url.searchParams.get("parentId")
 
     const productEntity = new ProductEntity()
-    const products = await productEntity.findAll([
+
+    // components of the product
+    const product = await productEntity.findById(parentId as string)
+    const productComponents = product?.components || []
+
+    // all components that can be added to the product
+    const components = await productEntity.findAll([
         {
             field: new FieldPath("info", "type"),
             op: "in",
@@ -26,18 +34,24 @@ export async function loader({ request }: LoaderArgs) {
         }
     ])
 
-    return json({ products })
+    // (all ingredients and prepared products that are not already in the product)
+    const componentsFiltered = components.filter(c => {
+        return !productComponents.find(pc => pc.product.id === c.id)
+    })
+
+    return json({ components: componentsFiltered })
 }
 
 interface ComponentSelectorProps {
     parentId: string | undefined
     hideAlphabetSelector?: boolean
+    newComponentLink?: string
 }
 
 
-export function ComponentSelector({ parentId, hideAlphabetSelector = false }: ComponentSelectorProps) {
+export function ComponentSelector({ parentId, hideAlphabetSelector = false, newComponentLink }: ComponentSelectorProps) {
     const productComponentsFetcher = useFetcher<typeof loader>()
-    const components = productComponentsFetcher.data?.products as Product[] | undefined | null
+    const components = productComponentsFetcher.data?.components as Product[] | undefined | null
 
     const [searchParam, setSearchParams] = useSearchParams()
 
@@ -68,7 +82,7 @@ export function ComponentSelector({ parentId, hideAlphabetSelector = false }: Co
     }
 
     const newComponentButton = (
-        <Link to={`/admin/products/new`}>
+        <Link to={newComponentLink || `/admin/products/new`}>
             <Button type="button" className="flex gap-2 w-full">
                 <Plus size={16} />
                 Criar novo componente
@@ -81,10 +95,10 @@ export function ComponentSelector({ parentId, hideAlphabetSelector = false }: Co
 
         <div className="w-full border-2 border-muted rounded-lg">
             <Folder title="Adicionar componente" onClick={() => {
-                productComponentsFetcher.submit(null, {
-                    method: "GET",
-                    action: "/admin/resources/component-selector"
-                })
+                productComponentsFetcher.submit(
+                    { parentId: parentId },
+                    { method: "GET", action: "/admin/resources/component-selector" }
+                )
             }}>
                 <div className="flex flex-col gap-4">
 

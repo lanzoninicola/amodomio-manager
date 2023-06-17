@@ -12,7 +12,7 @@ export default function IngredientsOutlet() {
         <Container>
             <div className="flex justify-between items-center mb-8 md:mb-4">
                 <h1 className="text-2xl font-bold">
-                    Sabor
+                    Sabores
                 </h1>
                 <Link to={`/admin/toppings/new`}>
                     <Button type="button" className="flex gap-2">
