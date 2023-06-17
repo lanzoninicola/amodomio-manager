@@ -25,7 +25,7 @@ import toLowerCase from "~/utils/to-lower-case";
 import trim from "~/utils/trim";
 import { ProductEntity } from "~/domain/product/product.entity";
 import { jsonParse } from "~/utils/json-helper";
-import { Delete } from "lucide-react";
+import { ChevronRight, Delete } from "lucide-react";
 import { DeleteItemButton } from "~/components/primitives/table-list";
 
 
@@ -194,6 +194,17 @@ function ToppingQuickList() {
         return null
     }
 
+    function increaseAmount(toppingId: string) {
+        if (!toppingId) return
+
+        const amount = clickedAmount[toppingId] ?? 0
+        if (amount === 2) {
+            setClickedAmount({ ...clickedAmount, [toppingId]: 0 })
+            return
+        }
+        setClickedAmount({ ...clickedAmount, [toppingId]: amount + 1 })
+    }
+
     return (
 
         <ul className="grid grid-cols-2 md:grid-cols-4 lg:w-1/2">
@@ -205,18 +216,10 @@ function ToppingQuickList() {
                         <Form method="post" >
                             <div className="flex justify-between items-center py-2">
                                 <input type="hidden" name="id" value={topping.id} />
-                                <span className="text-xs md:text-sm" onClick={
-                                    () => {
-                                        if (!topping.id) return
-
-                                        const amount = clickedAmount[topping.id] ?? 0
-                                        if (amount === 2) {
-                                            setClickedAmount({ ...clickedAmount, [topping.id]: 0 })
-                                            return
-                                        }
-                                        setClickedAmount({ ...clickedAmount, [topping.id]: amount + 1 })
-                                    }
-                                }>{topping.name}</span>
+                                <div className="flex gap-2 justify-between w-full" onClick={() => increaseAmount(topping.id as string)}>
+                                    <span className="text-xs md:text-sm">{topping.name}</span>
+                                    {clickedAmount[topping.id] !== 2 && <ChevronRight size={14} />}
+                                </div>
                                 {clickedAmount[topping.id] === 2 && <DeleteItemButton iconSize={14} actionName="topping-delete" />}
                             </div>
                         </Form>
@@ -224,7 +227,7 @@ function ToppingQuickList() {
                     </li>
                 )
             })}
-        </ul>
+        </ul >
     )
 }
 
