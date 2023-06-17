@@ -10,3 +10,5 @@ node_modules
 app/lib/firestore-model/src/config/amodomio-manager.json
 
 app/lib/firestore-model/src/config/amodomio-manager-dev.json
+
+.env.dev
