@@ -39,6 +39,9 @@ module.exports = {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
         },
+        "brand-green": {
+          DEFAULT: "var(--brand-green)",
+        },
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
@@ -55,6 +58,7 @@ module.exports = {
       },
       fontFamily: {
         sans: ["var(--font-sans)", ...fontFamily.sans],
+        logo: ["var(--font-logo)", ...fontFamily.sans],
       },
       keyframes: {
         "accordion-down": {
@@ -65,10 +69,36 @@ module.exports = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: 0 },
         },
+        "rotate-360": {
+          from: { transform: "rotate(0deg)" },
+          to: { transform: "rotate(360deg)" },
+        },
+        move: {
+          "0%": {
+            opacity: "0.1",
+            transform: "translateX(200px)",
+          },
+          "10%": {
+            opacity: 0.7,
+          },
+          "90%": {
+            opacity: 0,
+          },
+          "100%": {
+            opacity: 0,
+            transform: "translateX(-1000px)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "rotate-360": "rotate-360 1s linear infinite",
+        "rotate-360-slow": "rotate-360 15s linear infinite",
+        move: "move 8s ease-in-out infinite",
+        "move-slow": "move 9.2s ease-in-out infinite",
+        "move-slower": "move 11.2s ease-in-out infinite",
+        "move-slowest": "move 13.5s ease-in-out infinite",
       },
     },
   },

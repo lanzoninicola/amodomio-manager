@@ -1,5 +1,6 @@
 import { User2 } from "lucide-react";
 import { LogoTransparent } from "~/components/primitives/logo/logo";
+import { NavMenuLarge } from "~/components/primitives/navbar/nav-menu-large";
 import Navbar from "~/components/primitives/navbar/navbar";
 
 
@@ -25,7 +26,8 @@ export default function AdminHeader() {
                 <LogoTransparent />
             </div>
 
-            <Navbar links={navLinks} />
+            <NavMenuLarge links={navLinks} />
+            {/* <Navbar links={navLinks} /> */}
             <User2 size={28} />
 
 
