@@ -2,7 +2,22 @@ import { useActionData } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import type { HttpResponse } from "~/utils/http-response.server";
 
-export default function useFormResponse() {
+interface useFormResponseReturnType {
+  // isError is used to display an error message (DO NOT USE "isError === true" to display an error message)
+  isError: boolean;
+  // isOk is used to display a success message (DO NOT USE "isError === false" to display a success message)
+  isOk: boolean;
+  // formRef is used to reset the form after a successful submission
+  formRef: React.MutableRefObject<HTMLFormElement | null>;
+  // inputFocusRef is used to focus the input after a successful submission
+  inputFocusRef: React.MutableRefObject<HTMLInputElement | null>;
+  // errorMessage is used to display an error message
+  errorMessage: string;
+  // data is the response data (payload field of the HttpResponse interface)
+  data: HttpResponse | undefined;
+}
+
+export default function useFormResponse(): useFormResponseReturnType {
   const actionData = useActionData<HttpResponse | undefined>();
   const [isError, setIsError] = useState(false);
   const [isOk, setIsOk] = useState(false);
@@ -31,11 +46,8 @@ export default function useFormResponse() {
 
   return {
     isError,
-    // isOk is used to display a success message
     isOk,
-    // formRef is used to reset the form after a successful submission
     formRef,
-    // inputFocusRef is used to focus the input after a successful submission
     inputFocusRef,
     errorMessage,
     data,

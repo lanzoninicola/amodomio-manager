@@ -11,11 +11,10 @@ import { Button } from "~/components/ui/button";
 import { TableRow, TableTitles, Table } from "~/components/primitives/table-list";
 import useFormSubmissionnState from "~/hooks/useFormSubmissionState";
 import randomReactKey from "~/utils/random-react-key";
-import type { ComponentType } from "~/domain/product/product-composition.model.server";
 import NoRecordsFound from "~/components/primitives/no-records-found/no-records-found";
 import { ComponentSelector } from "./admin.resources.component-selector";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
-import type { Product, ProductComponent } from "~/domain/product/product.model.server";
+import type { Product, ProductComponent, ProductUnit } from "~/domain/product/product.model.server";
 import { jsonParse, jsonStringify } from "~/utils/json-helper";
 import toNumber from "~/utils/to-number";
 import Tooltip from "~/components/primitives/tooltip/tooltip";
@@ -36,15 +35,19 @@ export async function action({ request }: ActionArgs) {
 
     if (_action === "composition-add-component") {
 
-        if (!jsonParse(values.component)) {
+        const component = jsonParse(values.component)
+
+        if (!component) {
             return badRequest({ action: "composition-add-component", message: "Occorreu um erro adicionando o componente" })
         }
 
         const newComponent: ProductComponent = {
             parentId: parentProductId,
-            product: jsonParse(values.component),
+            product: {
+                id: component.id as string,
+            },
             quantity: 0,
-            unit: "un",
+            unit: component.unit as ProductUnit,
             unitCost: 0,
         }
 
@@ -111,7 +114,7 @@ export default function SingleProductComposition() {
 
     return (
         <div className="flex flex-col gap-8 h-full">
-            <ComponentSelector parentProductId={product.id} />
+            <ComponentSelector parentId={product.id} />
             <ProductComponentList />
         </div>
     )

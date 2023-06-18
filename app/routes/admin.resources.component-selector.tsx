@@ -16,9 +16,17 @@ import { jsonStringify } from '~/utils/json-helper';
 import toLowerCase from '~/utils/to-lower-case';
 
 export async function loader({ request }: LoaderArgs) {
+    const url = new URL(request.url)
+    const parentId = url.searchParams.get("parentId")
 
     const productEntity = new ProductEntity()
-    const products = await productEntity.findAll([
+
+    // components of the product
+    const product = await productEntity.findById(parentId as string)
+    const productComponents = product?.components || []
+
+    // all components that can be added to the product
+    const components = await productEntity.findAll([
         {
             field: new FieldPath("info", "type"),
             op: "in",
@@ -26,13 +34,24 @@ export async function loader({ request }: LoaderArgs) {
         }
     ])
 
-    return json({ products })
+    // (all ingredients and prepared products that are not already in the product)
+    const componentsFiltered = components.filter(c => {
+        return !productComponents.find(pc => pc.product.id === c.id)
+    })
+
+    return json({ components: componentsFiltered })
 }
 
-export function ComponentSelector({ parentProductId }: { parentProductId: string | undefined }) {
-    const productComponentsFetcher = useFetcher<typeof loader>()
-    const components = productComponentsFetcher.data?.products as Product[] | undefined | null
+interface ComponentSelectorProps {
+    parentId: string | undefined
+    hideAlphabetSelector?: boolean
+    newComponentLink?: string
+}
 
+
+export function ComponentSelector({ parentId, hideAlphabetSelector = false, newComponentLink }: ComponentSelectorProps) {
+    const productComponentsFetcher = useFetcher<typeof loader>()
+    const components = productComponentsFetcher.data?.components as Product[] | undefined | null
 
     const [searchParam, setSearchParams] = useSearchParams()
 
@@ -56,14 +75,14 @@ export function ComponentSelector({ parentProductId }: { parentProductId: string
         return true
     })
 
-    if (!parentProductId) {
+    if (!parentId) {
         return (
             <GenericError message="O ID do produto não foi informado, não é possivel gerenciar a composição" />
         )
     }
 
     const newComponentButton = (
-        <Link to={`/admin/products/new`}>
+        <Link to={newComponentLink || `/admin/products/new`}>
             <Button type="button" className="flex gap-2 w-full">
                 <Plus size={16} />
                 Criar novo componente
@@ -76,10 +95,10 @@ export function ComponentSelector({ parentProductId }: { parentProductId: string
 
         <div className="w-full border-2 border-muted rounded-lg">
             <Folder title="Adicionar componente" onClick={() => {
-                productComponentsFetcher.submit(null, {
-                    method: "GET",
-                    action: "/admin/resources/component-selector"
-                })
+                productComponentsFetcher.submit(
+                    { parentId: parentId },
+                    { method: "GET", action: "/admin/resources/component-selector" }
+                )
             }}>
                 <div className="flex flex-col gap-4">
 
@@ -105,13 +124,16 @@ export function ComponentSelector({ parentProductId }: { parentProductId: string
                                     </div>
                                     {newComponentButton}
                                 </div>
-                                <AlphabetSelector searchParam="componentNameStartsWith" dataset={components?.map(c => c.name)}
-                                    onClick={(e) => {
-                                        setSearch({
-                                            type: "startsWith",
-                                            value: e.currentTarget.value
-                                        })
-                                    }} />
+                                {hideAlphabetSelector === false &&
+                                    (
+                                        <AlphabetSelector searchParam="componentNameStartsWith" dataset={components?.map(c => c.name)}
+                                            onClick={(e) => {
+                                                setSearch({
+                                                    type: "startsWith",
+                                                    value: e.currentTarget.value
+                                                })
+                                            }} />
+                                    )}
                             </div>
                             <ul className="flex flex-wrap">
 
@@ -119,10 +141,10 @@ export function ComponentSelector({ parentProductId }: { parentProductId: string
                                     const ingredientNameStartWith = searchParam.get('ingredientNameStartWith')
 
                                     if (ingredientNameStartWith && c.name.startsWith(ingredientNameStartWith)) {
-                                        return <ComponentName key={idx} component={c} parentProductId={parentProductId} />
+                                        return <ComponentName key={idx} component={c} parentId={parentId} />
                                     }
 
-                                    return <ComponentName key={idx} component={c} parentProductId={parentProductId} />
+                                    return <ComponentName key={idx} component={c} parentId={parentId} />
                                 })}
                             </ul>
                         </>
@@ -138,18 +160,18 @@ export function ComponentSelector({ parentProductId }: { parentProductId: string
 
 interface ComponentNameProps {
     component: Product
-    parentProductId: string
+    parentId: string
 }
 
 
-function ComponentName({ component, parentProductId }: ComponentNameProps) {
+function ComponentName({ component, parentId }: ComponentNameProps) {
     return (
-        <li>
+        <li className="bg-secondary mr-2 mb-3 p-2 rounded-md">
             <Form method="post">
-                <Input type="text" hidden id="parentId" name="parentId" value={parentProductId} readOnly className="hidden" />
+                <Input type="text" hidden id="parentId" name="parentId" value={parentId} readOnly className="hidden" />
                 <Input type="text" hidden id="component" name="component" value={jsonStringify(component)} readOnly className="hidden" />
                 <Button type="submit" size="sm" name="_action" value="composition-add-component" className="w-full text-left" variant="ghost">
-                    <span className="text-xs text-center">{component.name}</span>
+                    <span className="text-md lg:text-xs text-center">{component.name}</span>
                 </Button>
             </Form>
         </li >

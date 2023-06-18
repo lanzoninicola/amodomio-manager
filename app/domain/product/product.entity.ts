@@ -9,6 +9,11 @@ import { ProductModel } from "./product.model.server";
 import type { whereCompoundConditions } from "~/lib/firestore-model/src";
 import type { LatestSellPrice } from "../sell-price/sell-price.model.server";
 
+export interface ProductTypeHTMLSelectOption {
+  value: ProductType;
+  label: string;
+}
+
 export class ProductEntity {
   async create(product: Product): Promise<Product> {
     this.validate(product);
@@ -49,7 +54,14 @@ export class ProductEntity {
   async addComponent(productId: string, component: ProductComponent) {
     const product = await this.findById(productId);
     const components = product?.components || [];
-    components.push(component);
+
+    const componentExists = components.some(
+      (c) => c.product.id === component.product.id
+    );
+
+    if (componentExists === false) {
+      components.push(component);
+    }
 
     return await this.update(productId, {
       components: components,
@@ -140,7 +152,7 @@ export class ProductEntity {
     }
   }
 
-  static getProductTypeRawValues(): { value: ProductType; label: string }[] {
+  static getProductTypeRawValues(): ProductTypeHTMLSelectOption[] {
     return [
       { value: "pizza", label: "Pizza" },
       { value: "ingredient", label: "Ingrediente" },
