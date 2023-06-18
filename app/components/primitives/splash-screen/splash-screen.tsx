@@ -4,12 +4,12 @@ import { LogoOutlineWords, ItalianFlagSmall, Vespa } from "../logo/logo";
 export default function SplashScreen() {
     return (
         <div className="relative bg-brand-green h-screen w-screen">
-            <div className="absolute z-0 grid place-items-center center w-screen h-screen">
-                <div className="animate-rotate-360-slow hover:animate-none">
-                    <LogoOutlineWords />
+            <div className="grid place-items-center w-screen h-[75%]">
+                <div className="absolute z-0 ">
+                    <div className="animate-rotate-360-slow hover:animate-none">
+                        <LogoOutlineWords />
+                    </div>
                 </div>
-            </div>
-            <div className="relative w-screen h-screen">
                 <div className="absolute z-10 grid place-items-center w-screen h-screen">
                     <div className="relative flex flex-col items-center">
                         <ItalianFlagSmall className="absolute -top-14" />
@@ -41,10 +41,6 @@ export default function SplashScreen() {
 }
 
 
-interface CloudProps {
-    w?: string;
-    className?: string;
-}
 
 function Cloud({ w, ...props }: CloudProps) {
     return (
