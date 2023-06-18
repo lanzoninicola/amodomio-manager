@@ -2,7 +2,7 @@
 import type { V2_MetaFunction } from "@remix-run/node";
 import { type ActionArgs } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { AlertError, AlertOk } from "~/components/layout/alerts/alerts";
 import AutoCompleteDropdown from "~/components/primitives/autocomplete-dropdown/autocomplete-dropdown";
 import SubmitButton from "~/components/primitives/submit-button/submit-button";
@@ -13,6 +13,7 @@ import { Label } from "~/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import type { Ingredient } from "~/domain/ingredient/ingredient.entity";
 import { ingredientEntity } from "~/domain/ingredient/ingredient.entity";
+import UnitSelector from "~/domain/product/component/unit-selector/unit-selector";
 import type { ProductUnit } from "~/domain/product/product.model.server";
 import useFormResponse from "~/hooks/useFormResponse";
 import errorMessage from "~/utils/error-message";
@@ -80,26 +81,11 @@ export default function SingleIngredientNew() {
                                     onChange={(e) => setIngredientValues(e.target.value)}
                                     ref={inputFocusRef}
                                 />
-                                <AutoCompleteDropdown dataset={ingredients} fieldToSearch={"name"} searchValue={ingredientValues} />
+                                <AutoCompleteDropdown dataset={ingredients} fieldToSearch={"name"} searchValue={ingredientValues} title="O ingrediente já existe" />
                             </div>
                         </Fieldset>
 
-                        <Fieldset>
-                            <div className="md:max-w-[150px]">
-                                <Label htmlFor="unit">Unidade</Label>
-                                <Select name="unit" required defaultValue="gr" >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecionar..." />
-                                    </SelectTrigger>
-                                    <SelectContent id="unit" >
-                                        <SelectGroup >
-                                            <SelectItem value="gr" >GR</SelectItem>
-                                            <SelectItem value="un">UN</SelectItem>
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </Fieldset>
+                        <UnitSelector />
                     </div>
                     <div className="flex gap-2 mb-4">
                         <SubmitButton actionName="ingredient-create" className="text-lg md:text-md w-full md:w-[150px] gap-2" size={"lg"} />
@@ -107,7 +93,6 @@ export default function SingleIngredientNew() {
                     <div data-element="form-alert">
                         {isError && (<AlertError message={errorMessage} />)}
                         {isOk && (<AlertOk message={"Ingrediente criado com successo"} />)}
-
                     </div>
                 </Form>
                 <IngredientQuickList />

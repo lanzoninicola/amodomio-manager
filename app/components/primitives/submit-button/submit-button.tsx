@@ -7,26 +7,31 @@ import useFormSubmissionnState from "~/hooks/useFormSubmissionState";
 interface SubmitButtonProps extends ButtonProps {
     actionName: string,
     loadingText?: string,
-    idleText?: string
+    idleText?: string,
+    disableLoadingAnimation?: boolean,
 }
 
-export default function SubmitButton({ actionName, loadingText, idleText, ...props }: SubmitButtonProps) {
+export default function SubmitButton({ actionName, loadingText, idleText, disableLoadingAnimation, ...props }: SubmitButtonProps) {
 
     const formSubmissionState = useFormSubmissionnState()
     let formSubmissionInProgress = formSubmissionState === "inProgress"
 
-    const loadingTextToDisplay = loadingText || "Salvando..."
-    const idleTextToDisplay = idleText || "Salvar"
-
-    if (props.disabled) {
-        formSubmissionInProgress = formSubmissionInProgress && props.disabled
+    if (disableLoadingAnimation) {
+        formSubmissionInProgress = false
     }
 
+    console.log(props.disabled)
+
+    let icon = formSubmissionInProgress ? <Loader className="text-md" /> : <Save size={20} strokeWidth="1.25px" />
+    let text = formSubmissionInProgress ? "Salvando..." : "Salvar"
+    let disabled = formSubmissionInProgress || props.disabled
 
     return (
-        <Button type="submit" name="_action" value={actionName} disabled={formSubmissionInProgress} className={`flex gap-2 ${props.className}`} {...props}>
-            {formSubmissionInProgress ? <Loader size={16} /> : <Save size={16} />}
-            {formSubmissionInProgress ? loadingTextToDisplay : idleTextToDisplay}
+        <Button type="submit" name="_action" value={actionName} disabled={disabled} {...props} className={`flex gap-2 w-full md:w-[150px] ${props.className}  `} >
+            {icon}
+            <span className="text-lg lg:text-md">
+                {text}
+            </span>
         </Button>
     )
 

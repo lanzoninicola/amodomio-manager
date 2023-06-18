@@ -21,9 +21,13 @@ export const links: LinksFunction = () => [
     href: "https://fonts.gstatic.com",
   },
   {
-    href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Homemade+Apple&display=swap",
     rel: "stylesheet",
-  }
+  },
+  // {
+  //   href: "https://fonts.googleapis.com/css2?family=BioRhyme+Expanded:wght@700&display=swap",
+  //   rel: "stylesheet",
+  // }
 ];
 
 export default function App() {

@@ -28,6 +28,10 @@
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
+    --brand-green: #004538;
+
+    --brand-green-accent: #00ff00;
+
     --destructive: 0 100% 50%;
     --destructive-foreground: 210 40% 98%;
 
@@ -36,6 +40,8 @@
     --radius: 0.5rem;
 
     --font-sans: Inter;
+
+    --font-logo: "Homemade Apple";
   }
 
   .dark {

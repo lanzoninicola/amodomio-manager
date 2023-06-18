@@ -1,11 +1,11 @@
 import type { V2_MetaFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import Container from "~/components/layout/container/container";
+import { ItalianFlagSmall, LogoOutlineWords } from "~/components/primitives/logo/logo";
+import SplashScreen from "~/components/primitives/splash-screen/splash-screen";
 import { categoryEntity } from "~/domain/category/category.entity.server";
 import type { PizzaCatalog } from "~/domain/pizza-catalog/pizza-catalog.entity.server";
 import { pizzaCatalogEntity } from "~/domain/pizza-catalog/pizza-catalog.entity.server";
 import { ProductEntity } from "~/domain/product/product.entity";
-import type { Product } from "~/domain/product/product.model.server";
 import { sizeEntity } from "~/domain/size/size.entity.server";
 import { ok } from "~/utils/http-response.server";
 
@@ -75,13 +75,9 @@ export default function HomePage() {
   const loaderData = useLoaderData<typeof loader>();
   const pizzaCatalog = loaderData.payload.pizzaCatalog;
 
-  console.log(pizzaCatalog);
+  // console.log(pizzaCatalog);
 
   return (
-    <Container>
-      <div className="grid place-items-center center w-full h-full text-4xl">
-        This is the cardapio page
-      </div>
-    </Container>
+    <SplashScreen />
   );
 }

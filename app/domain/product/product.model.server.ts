@@ -59,7 +59,9 @@ export type ProductUnit = "gr" | "ml" | "un";
 
 export interface ProductComponent {
   parentId: string;
-  product: RawMaterialProduct | SemiManufacturedProduct;
+  product: {
+    id: string;
+  };
   unit: ProductUnit;
   quantity: number;
   unitCost: number;
