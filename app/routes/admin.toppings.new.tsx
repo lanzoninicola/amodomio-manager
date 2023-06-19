@@ -27,6 +27,7 @@ import { ProductEntity } from "~/domain/product/product.entity";
 import { jsonParse } from "~/utils/json-helper";
 import { ChevronRight, Delete } from "lucide-react";
 import { DeleteItemButton } from "~/components/primitives/table-list";
+import AlertItemExists from "~/components/primitives/alert-item-exists/alert-item-exists";
 
 
 export const meta: V2_MetaFunction = () => {
@@ -151,7 +152,7 @@ export default function SingleToppingNew() {
                                     }}
                                     defaultValue={toppingName ?? undefined}
                                 />
-                                <AutoCompleteDropdown dataset={toppings} fieldToSearch={"name"} searchValue={toppingValues} title="Verifica aqui abaixo se o sabor já existe:" />
+                                <AlertItemExists dataset={toppings} fieldToSearch={"name"} searchValue={toppingValues} title="Verifica aqui abaixo se o sabor já existe:" />
                             </div>
                         </Fieldset>
 
