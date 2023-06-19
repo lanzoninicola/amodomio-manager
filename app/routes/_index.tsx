@@ -1,7 +1,10 @@
-import type { V2_MetaFunction } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import type { ActionArgs } from "@remix-run/node";
+import { redirect, type V2_MetaFunction } from "@remix-run/node";
+import { Form, useLoaderData } from "@remix-run/react";
+import Container from "~/components/layout/container/container";
 import { ItalianFlagSmall, LogoOutlineWords } from "~/components/primitives/logo/logo";
 import SplashScreen from "~/components/primitives/splash-screen/splash-screen";
+import SubmitButton from "~/components/primitives/submit-button/submit-button";
 import { categoryEntity } from "~/domain/category/category.entity.server";
 import type { PizzaCatalog } from "~/domain/pizza-catalog/pizza-catalog.entity.server";
 import { pizzaCatalogEntity } from "~/domain/pizza-catalog/pizza-catalog.entity.server";
@@ -71,6 +74,24 @@ export async function loader() {
   });
 }
 
+export async function action({ request }: ActionArgs) {
+  let formData = await request.formData();
+  const { _action, ...values } = Object.fromEntries(formData);
+
+  if (_action === "orders-pizza-create-cart") {
+
+    // create a record of the order in the db
+    // return the id of the order
+
+    const cartId = "123";
+
+    return redirect(`/orders/phone?cartId=${cartId}`)
+  }
+
+
+  return null
+}
+
 export default function HomePage() {
   const loaderData = useLoaderData<typeof loader>();
   const pizzaCatalog = loaderData.payload.pizzaCatalog;
@@ -78,6 +99,10 @@ export default function HomePage() {
   // console.log(pizzaCatalog);
 
   return (
-    <SplashScreen />
+    <Container>
+      <Form method="post">
+        <SubmitButton actionName="orders-pizza-create-cart" idleText="Fazer Pedido" loadingText="Fazer Pedido" />
+      </Form>
+    </Container>
   );
 }

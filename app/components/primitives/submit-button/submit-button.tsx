@@ -20,11 +20,10 @@ export default function SubmitButton({ actionName, loadingText, idleText, disabl
         formSubmissionInProgress = false
     }
 
-    console.log(props.disabled)
-
     let icon = formSubmissionInProgress ? <Loader className="text-md" /> : <Save size={20} strokeWidth="1.25px" />
-    let text = formSubmissionInProgress ? "Salvando..." : "Salvar"
+    let text = formSubmissionInProgress ? (loadingText || "Salvando...") : (idleText || "Salvar")
     let disabled = formSubmissionInProgress || props.disabled
+
 
     return (
         <Button type="submit" name="_action" value={actionName} disabled={disabled} {...props} className={`flex gap-2 w-full md:w-[150px] ${props.className}  `} >
