@@ -14,20 +14,19 @@ interface SubmitButtonProps extends ButtonProps {
 export default function SubmitButton({ actionName, loadingText, idleText, disableLoadingAnimation, ...props }: SubmitButtonProps) {
 
     const formSubmissionState = useFormSubmissionnState()
-    let formSubmissionInProgress = formSubmissionState === "inProgress"
+    let formSubmissionInProgress = formSubmissionState === "submitting"
 
     if (disableLoadingAnimation) {
         formSubmissionInProgress = false
     }
 
-    console.log(props.disabled)
-
     let icon = formSubmissionInProgress ? <Loader className="text-md" /> : <Save size={20} strokeWidth="1.25px" />
-    let text = formSubmissionInProgress ? "Salvando..." : "Salvar"
+    let text = formSubmissionInProgress ? (loadingText || "Salvando...") : (idleText || "Salvar")
     let disabled = formSubmissionInProgress || props.disabled
 
+
     return (
-        <Button type="submit" name="_action" value={actionName} disabled={disabled} {...props} className={`flex gap-2 w-full md:w-[150px] ${props.className}  `} >
+        <Button type="submit" name="_action" value={actionName} disabled={disabled} {...props} className={`flex gap-2 w-full md:max-w-max md:px-8 ${props.className}  `} >
             {icon}
             <span className="text-lg lg:text-md">
                 {text}

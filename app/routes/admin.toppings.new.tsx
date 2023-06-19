@@ -128,8 +128,8 @@ export default function SingleToppingNew() {
 
 
     const tabs: TabItem[] = [
-        { id: "list", name: "Lista" },
-        { id: "component", name: "Componentes" },
+        { id: "list", name: "Lista sabores", default: true },
+        { id: "component", name: "Ingredientes" },
     ]
     return (
         <Card>
@@ -151,7 +151,7 @@ export default function SingleToppingNew() {
                                     }}
                                     defaultValue={toppingName ?? undefined}
                                 />
-                                <AutoCompleteDropdown dataset={toppings} fieldToSearch={"name"} searchValue={toppingValues} title="O sabor já existe" />
+                                <AutoCompleteDropdown dataset={toppings} fieldToSearch={"name"} searchValue={toppingValues} title="Verifica aqui abaixo se o sabor já existe:" />
                             </div>
                         </Fieldset>
 
@@ -160,13 +160,13 @@ export default function SingleToppingNew() {
                         <SubmitButton
                             actionName="topping-create"
                             className="text-lg md:text-md w-full md:w-[150px] gap-2" size={"lg"}
-                            disableLoadingAnimation={currentTab === "component" && currentToppingId !== null}
+                            disableLoadingAnimation={currentTab !== "" && currentToppingId !== null}
                             disabled={currentTab === "component" && currentToppingId !== null}
                         />
                     </div>
                     <div data-element="form-alert">
                         {isError && (<AlertError message={errorMessage} />)}
-                        {isOk && (<AlertOk message={formResponseData?.message || "Sabor criado com successo"} />)}
+                        {isOk && (<AlertOk message={formResponseData?.message || "Operação concluida com successo"} />)}
                     </div>
                 </Form>
                 <div>
@@ -177,6 +177,7 @@ export default function SingleToppingNew() {
                             parentId={currentToppingId}
                             hideAlphabetSelector={true}
                             newComponentLink={`/admin/products/new?type=ingredient&redirectUrl=/admin/toppings/new?name=${toppingValues}`}
+                            title="Adiçionar ingrediente"
                         />}
                 </div>
             </CardContent>
