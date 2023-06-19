@@ -130,7 +130,7 @@ export default function SingleToppingNew() {
 
     const tabs: TabItem[] = [
         { id: "list", name: "Lista sabores", default: true },
-        { id: "component", name: "Ingredientes" },
+        { id: "component", name: "Ingredientes", visibleCondition: toppingName !== null },
     ]
     return (
         <Card>
@@ -152,7 +152,14 @@ export default function SingleToppingNew() {
                                     }}
                                     defaultValue={toppingName ?? undefined}
                                 />
-                                <AlertItemExists dataset={toppings} fieldToSearch={"name"} searchValue={toppingValues} title="Verifica aqui abaixo se o sabor já existe:" />
+                                <AlertItemExists
+                                    dataset={toppings}
+                                    fieldToSearch={"name"}
+                                    searchValue={toppingValues}
+                                    title="Verifica aqui abaixo se o sabor já existe:"
+                                    // force the alert to close when the component is just created
+                                    forceCloseCondition={currentToppingId !== null}
+                                />
                             </div>
                         </Fieldset>
 

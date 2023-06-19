@@ -8,6 +8,7 @@ interface AlertItemExistsProps<T> {
     fieldToSearch: string & keyof T,
     searchValue: string,
     title?: string,
+    forceCloseCondition?: boolean,
 }
 
 export default function AlertItemExists<T>({ dataset, fieldToSearch, searchValue, title }: AlertItemExistsProps<T>) {
