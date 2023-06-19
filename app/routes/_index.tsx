@@ -99,10 +99,11 @@ export default function HomePage() {
   // console.log(pizzaCatalog);
 
   return (
-    <Container>
-      <Form method="post">
-        <SubmitButton actionName="orders-pizza-create-cart" idleText="Fazer Pedido" loadingText="Fazer Pedido" />
-      </Form>
-    </Container>
+    <SplashScreen />
+    // <Container>
+    //   <Form method="post">
+    //     <SubmitButton actionName="orders-pizza-create-cart" idleText="Fazer Pedido" loadingText="Fazer Pedido" />
+    //   </Form>
+    // </Container>
   );
 }
