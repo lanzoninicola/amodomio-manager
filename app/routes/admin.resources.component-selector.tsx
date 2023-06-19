@@ -46,10 +46,11 @@ interface ComponentSelectorProps {
     parentId: string | undefined
     hideAlphabetSelector?: boolean
     newComponentLink?: string
+    title?: string
 }
 
 
-export function ComponentSelector({ parentId, hideAlphabetSelector = false, newComponentLink }: ComponentSelectorProps) {
+export function ComponentSelector({ parentId, hideAlphabetSelector = false, newComponentLink, title }: ComponentSelectorProps) {
     const productComponentsFetcher = useFetcher<typeof loader>()
     const components = productComponentsFetcher.data?.components as Product[] | undefined | null
 
@@ -94,7 +95,7 @@ export function ComponentSelector({ parentId, hideAlphabetSelector = false, newC
     return (
 
         <div className="w-full border-2 border-muted rounded-lg">
-            <Folder title="Adicionar componente" onClick={() => {
+            <Folder title={title || "Adicionar componente"} onClick={() => {
                 productComponentsFetcher.submit(
                     { parentId: parentId },
                     { method: "GET", action: "/admin/resources/component-selector" }

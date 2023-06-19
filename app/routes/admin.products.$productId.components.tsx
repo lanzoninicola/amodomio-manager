@@ -154,7 +154,7 @@ function ProductComponentList() {
                                 row={component}
                                 showDateColumns={false}
                                 clazzName="grid-cols-4"
-                                isProcessing={formSubmissionState === "inProgress"}
+                                isProcessing={formSubmissionState === "submitting"}
                             >
 
                                 <div>

@@ -92,7 +92,7 @@ function IngredientTableRow({ ingredient, clazzName }: IngredientTableRowProps) 
         <Form method="post" >
             <TableRow
                 row={ingredient}
-                isProcessing={formSubmissionState === "inProgress"}
+                isProcessing={formSubmissionState === "submitting"}
                 clazzName={`${clazzName}`}
             >
                 <div className="flex gap-2 md:gap-4 items-center">
