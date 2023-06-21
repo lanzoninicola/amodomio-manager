@@ -42,8 +42,20 @@ module.exports = {
         "brand-green": {
           DEFAULT: "var(--brand-green)",
         },
+        "brand-military": {
+          DEFAULT: "var(--brand-military)",
+        },
         "brand-green-accent": {
           DEFAULT: "var(--brand-green-accent)",
+        },
+        "brand-yellow": {
+          DEFAULT: "var(--brand-yellow)",
+        },
+        "brand-orange": {
+          DEFAULT: "var(--brand-orange)",
+        },
+        "brand-cloud": {
+          DEFAULT: "var(--brand-cloud)",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",

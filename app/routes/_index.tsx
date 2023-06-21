@@ -1,9 +1,11 @@
 import { type V2_MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
+import React from "react";
 import Container from "~/components/layout/container/container";
 import { LogoTransparent } from "~/components/primitives/logo/logo";
 
 import SplashScreen from "~/components/primitives/splash-screen/splash-screen";
+import { cn } from "~/lib/utils";
 
 export const meta: V2_MetaFunction = () => {
     return [
@@ -20,27 +22,35 @@ export const meta: V2_MetaFunction = () => {
 export default function HomePage() {
 
     return (
-        <div className="h-screen bg-brand-green-accent flex flex-col">
-            <div className="py-6 md:py-12 flex justify-center">
+        <div className="relative h-screen bg-brand-orange">
+            <div className="py-6 hidden md:visible">
                 <LogoTransparent />
             </div>
-            <div className="w-full h-full grid place-items-center">
-                <Heading />
-            </div>
-            <div className="relative overflow-y-hidden h-full">
-                <div className="absolute top-[20%] -left-40 md:left-1/2 md:-translate-x-1/2 -rotate-[84deg] w-[800px]" >
-                    <img src="/images/pizza-linguiça.png" alt="Pizza retangular linguiça com batate ao forno" />
-                </div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 m-auto">
-                    <Link to="/cardapio">
-                        <div className="backdrop-blur-lg px-8 py-4 rounded-full shadow-lg">
-                            <p className="text-white font-accent text-md md:text-xl uppercase text-center">Vai ao Cardápio</p>
-                        </div>
-                    </Link>
+            <BgImageTw />
 
-                </div>
-            </div>
+
+
         </div >
+    )
+}
+
+function BgImage({ className }: React.HTMLAttributes<HTMLDivElement>) {
+    return (
+        <div
+            className={cn(
+                "relative w-full h-full bg-size-cover bg-center bg-no-repeat",
+                className
+            )}
+            style={{
+                backgroundImage: "url('/images/pizza-burrata-bg.png')",
+            }}>
+        </ div>
+    )
+}
+
+function BgImageTw({ className }: React.HTMLAttributes<HTMLDivElement>) {
+    return (
+        <img src="/images/pizza-burrata-bg.png" alt="Pizza burrata" className="absolute md:left-1/4 md:top-0 md:w-auto md:h-auto w-[190%] max-w-none -left-24 top-12" />
     )
 }
 
