@@ -1,7 +1,15 @@
-export function LogoTransparent() {
+
+interface LogoProps {
+    clazzName?: string;
+}
+
+export function LogoTransparent({ clazzName }: LogoProps) {
+
 
     return (
-        <img src="/images/logo-transparent.png" alt="Logo A Modo Mio" width="60px" height="60px" />
+        <div className={`w-[60px] md:w-[80px] ${clazzName}`}>
+            <img src="/images/logo-transparent.png" alt="Logo A Modo Mio" />
+        </div>
     )
 }
 

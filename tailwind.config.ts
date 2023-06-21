@@ -42,6 +42,9 @@ module.exports = {
         "brand-green": {
           DEFAULT: "var(--brand-green)",
         },
+        "brand-green-accent": {
+          DEFAULT: "var(--brand-green-accent)",
+        },
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
@@ -59,6 +62,7 @@ module.exports = {
       fontFamily: {
         sans: ["var(--font-sans)", ...fontFamily.sans],
         logo: ["var(--font-logo)", ...fontFamily.sans],
+        accent: ["var(--font-accent)", ...fontFamily.sans],
       },
       keyframes: {
         "accordion-down": {

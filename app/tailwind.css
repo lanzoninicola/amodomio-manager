@@ -30,7 +30,7 @@
 
     --brand-green: #004538;
 
-    --brand-green-accent: #00ff00;
+    --brand-green-accent: #00c9a3;
 
     --destructive: 0 100% 50%;
     --destructive-foreground: 210 40% 98%;
@@ -42,6 +42,8 @@
     --font-sans: Inter;
 
     --font-logo: "Homemade Apple";
+
+    --font-accent: "BioRhyme Expanded", serif;
   }
 
   .dark {

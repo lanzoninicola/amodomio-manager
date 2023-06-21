@@ -13,7 +13,7 @@ export class BaseEntity<T> {
     return this.save(record);
   }
 
-  private async save(record: T): Promise<T> {
+  protected async save(record: T): Promise<T> {
     return await this.model.add(record as { [key: string]: any });
   }
 

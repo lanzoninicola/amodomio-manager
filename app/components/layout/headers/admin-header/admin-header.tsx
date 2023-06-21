@@ -26,8 +26,8 @@ export default function AdminHeader() {
                 <LogoTransparent />
             </div>
 
-            <NavMenuLarge links={navLinks} />
-            {/* <Navbar links={navLinks} /> */}
+            {/* <NavMenuLarge links={navLinks} /> */}
+            <Navbar links={navLinks} />
             <User2 size={28} />
 
 

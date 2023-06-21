@@ -1,109 +1,55 @@
-import type { ActionArgs } from "@remix-run/node";
-import { redirect, type V2_MetaFunction } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
+import { type V2_MetaFunction } from "@remix-run/node";
+import { Link } from "@remix-run/react";
 import Container from "~/components/layout/container/container";
-import { ItalianFlagSmall, LogoOutlineWords } from "~/components/primitives/logo/logo";
+import { LogoTransparent } from "~/components/primitives/logo/logo";
+
 import SplashScreen from "~/components/primitives/splash-screen/splash-screen";
-import SubmitButton from "~/components/primitives/submit-button/submit-button";
-import { categoryEntity } from "~/domain/category/category.entity.server";
-import type { PizzaCatalog } from "~/domain/pizza-catalog/pizza-catalog.entity.server";
-import { pizzaCatalogEntity } from "~/domain/pizza-catalog/pizza-catalog.entity.server";
-import { ProductEntity } from "~/domain/product/product.entity";
-import { sizeEntity } from "~/domain/size/size.entity.server";
-import { ok } from "~/utils/http-response.server";
 
 export const meta: V2_MetaFunction = () => {
-  return [
-    { title: "Cardápio A Modio Mio" },
-    {
-      name: "description",
-      content: "Bem vindo ao cardápio da Pizza Delivery A Modo Mio",
-    },
-  ];
+    return [
+        { title: "Cardápio A Modio Mio" },
+        {
+            name: "description",
+            content: "Bem vindo ao cardápio da Pizza Delivery A Modo Mio",
+        },
+    ];
 };
 
-export async function loader() {
-  const productEntity = new ProductEntity();
-  const product = await productEntity.findAll();
-  const categories = await categoryEntity.findAll();
-  const sizes = await sizeEntity.findAll();
 
-  const pizzaRawCatalog = (await pizzaCatalogEntity.findOne([
-    {
-      field: "type",
-      op: "==",
-      value: "pizza",
-    },
-  ])) as PizzaCatalog;
-
-  let pizzaCatalog: any = [];
-
-  if (pizzaRawCatalog && pizzaRawCatalog.items) {
-    pizzaCatalog = pizzaRawCatalog.items.map((item) => {
-      return {
-        ...item.product,
-        product: {
-          ...product.find((p) => p.id === item.product.id),
-          sizes: item.product.sizes.map((s) => {
-            return {
-              ...s,
-              ...sizes.find((size) => size.id === s.id),
-              pizzas: s.toppings.map((topping) => {
-                return {
-                  ...topping,
-                  topping: {
-                    ...product.find((p) => p.id === topping.id),
-                  },
-                  category: {
-                    ...categories.find((c) => c.id === topping.categoryId),
-                  },
-                };
-              }),
-            };
-          }),
-        },
-      };
-    });
-  }
-
-  return ok({
-    product,
-    categories,
-    sizes,
-    pizzaCatalog,
-  });
-}
-
-export async function action({ request }: ActionArgs) {
-  let formData = await request.formData();
-  const { _action, ...values } = Object.fromEntries(formData);
-
-  if (_action === "orders-pizza-create-cart") {
-
-    // create a record of the order in the db
-    // return the id of the order
-
-    const cartId = "123";
-
-    return redirect(`/orders/phone?cartId=${cartId}`)
-  }
-
-
-  return null
-}
 
 export default function HomePage() {
-  const loaderData = useLoaderData<typeof loader>();
-  const pizzaCatalog = loaderData.payload.pizzaCatalog;
 
-  // console.log(pizzaCatalog);
+    return (
+        <div className="h-screen bg-brand-green-accent flex flex-col">
+            <div className="py-6 md:py-12 flex justify-center">
+                <LogoTransparent />
+            </div>
+            <div className="w-full h-full grid place-items-center">
+                <Heading />
+            </div>
+            <div className="relative overflow-y-hidden h-full">
+                <div className="absolute top-[20%] -left-40 md:left-1/2 md:-translate-x-1/2 -rotate-[84deg] w-[800px]" >
+                    <img src="/images/pizza-linguiça.png" alt="Pizza retangular linguiça com batate ao forno" />
+                </div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 m-auto">
+                    <Link to="/cardapio">
+                        <div className="backdrop-blur-lg px-8 py-4 rounded-full shadow-lg">
+                            <p className="text-white font-accent text-md md:text-xl uppercase text-center">Vai ao Cardápio</p>
+                        </div>
+                    </Link>
 
-  return (
-    <SplashScreen />
-    // <Container>
-    //   <Form method="post">
-    //     <SubmitButton actionName="orders-pizza-create-cart" idleText="Fazer Pedido" loadingText="Fazer Pedido" />
-    //   </Form>
-    // </Container>
-  );
+                </div>
+            </div>
+        </div >
+    )
+}
+
+function Heading() {
+    return (
+        <div className="flex flex-col gap-4">
+            <h1 className="font-accent uppercase text-3xl md:text-5xl text-center">a pizza</h1>
+            <h1 className="font-logo text-5xl md:text-7xl text-center">a modo mio</h1>
+            <h2 className="font-accent uppercase text-md md:text-xl text-center">não é a pizza<br /> comum</h2>
+        </div>
+    )
 }

@@ -6,10 +6,10 @@ export type CartStatus = "open" | "closed";
 export interface Cart {
   id?: string;
   status: CartStatus;
-  phoneNumber: string;
-  cep: string;
-  deliveryAddress: OrderDeliveryAddress;
-  observation: string;
+  phoneNumber?: string;
+  cep?: string;
+  deliveryAddress?: OrderDeliveryAddress;
+  observation?: string;
 }
 
 const CartModel = createFirestoreModel<Cart>("carts");
