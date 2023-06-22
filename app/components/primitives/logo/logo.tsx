@@ -23,7 +23,7 @@ export function LogoOutlineWords() {
 export function ItalianFlagSmall({ ...props }) {
 
     return (
-        <img src="/images/italian-flag-small-bg-green.png" alt="Logo A Modo Mio" width="31.37px" height="23px" {...props} />
+        <img src="/images/italian-flag-small-bg-green.png" alt="Logo A Modo Mio" {...props} />
     )
 }
 
