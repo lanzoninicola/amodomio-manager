@@ -1,15 +1,15 @@
 import type { LoaderArgs } from "@remix-run/node";
 import { redirect, type V2_MetaFunction } from "@remix-run/node";
 import { Form, Link, useLoaderData, useSearchParams } from "@remix-run/react";
-import { ArrowDown, ArrowDownUp, ArrowUp, Edit, SortAsc, SortDesc, Trash } from "lucide-react";
+import { Edit, Trash } from "lucide-react";
 import Container from "~/components/layout/container/container";
 import NoRecordsFound from "~/components/primitives/no-records-found/no-records-found";
+import SortingOrderItems from "~/components/primitives/sorting-order-items/sorting-order-items";
 import SubmitButton from "~/components/primitives/submit-button/submit-button";
 import { Button } from "~/components/ui/button";
 import Fieldset from "~/components/ui/fieldset";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { Separator } from "~/components/ui/separator";
 import { Switch } from "~/components/ui/switch";
 import { categoryEntity } from "~/domain/category/category.entity.server";
 import type { Category } from "~/domain/category/category.model.server";
@@ -204,7 +204,7 @@ function CategoryList({ category }: CategoryListProps) {
     return (
         <div className={`border-2 border-muted rounded-lg p-4 flex flex-col gap-2 w-full`}>
 
-            <SortingOrder enabled={action === "categories-sortorder"} itemId={category.id}>
+            <SortingOrderItems enabled={action === "categories-sortorder"} itemId={category.id}>
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="font-lg font-bold tracking-tight">{category.name}</h2>
                     <Link to={`?_action=category-edit&id=${category.id}`} >
@@ -215,43 +215,8 @@ function CategoryList({ category }: CategoryListProps) {
                     <span className="font-semibold text-sm">Pública no cardápio</span>
                     <Switch id="visible" name="visible" defaultChecked={category.visible} disabled />
                 </div>
-            </SortingOrder>
+            </SortingOrderItems>
         </div>
     )
 }
 
-
-interface SortingOrderProps {
-    itemId?: string
-    enabled: boolean
-    children: React.ReactNode
-}
-
-function SortingOrder({ enabled, itemId, children }: SortingOrderProps) {
-
-    if (enabled === false) return <>{children}</>
-
-    return (
-        <div className="grid grid-cols-[1fr_.15fr] gap-2">
-            <div>
-                {children}
-            </div>
-            <Form method="post">
-                <InputItem type="hidden" name="id" defaultValue={itemId} />
-                <div className="grid grid-rows-2 gap-2">
-                    <Button type="submit" variant="ghost" name="_action" value="item-sortorder-up" className="w-full">
-                        <div className="bg-muted flex items-center justify-center rounded-md p-2">
-                            <ArrowUp size={24} className="cursor-pointer" />
-                        </div>
-                    </Button>
-                    <Button type="submit" variant="ghost" name="_action" value="item-sortorder-down" className="w-full">
-                        <div className="bg-muted flex items-center justify-center rounded-md p-2">
-                            <ArrowDown size={24} className="cursor-pointer" />
-                        </div>
-                    </Button>
-                </div>
-            </Form>
-        </div>
-    )
-
-}

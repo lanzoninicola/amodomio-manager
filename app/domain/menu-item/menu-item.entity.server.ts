@@ -1,10 +1,67 @@
 import { badRequest } from "~/utils/http-response.server";
 import { BaseEntity } from "../base.entity";
 import { MenuItemModel, type MenuItem } from "./menu-item.model.server";
+import { CategoryModel } from "../category/category.model.server";
 
 class MenuItemEntity extends BaseEntity<MenuItem> {
-  async sortDown(id: string): Promise<MenuItem> {
+  //   override async create(menuItem: MenuItem): Promise<MenuItem> {
+  //     this.validate(menuItem);
+
+  //     const latest = await this.getLatest();
+
+  //     if (latest) {
+  //       menuItem.sortOrder = (latest?.sortOrder || 0) + 1;
+  //     } else {
+  //       menuItem.sortOrder = 1;
+  //     }
+
+  //     return await super.save(menuItem);
+  //   }
+
+  async resetSortOrder(): Promise<void> {
+    const all = await MenuItemModel.whereCompound([
+      {
+        field: "visible",
+        op: "==",
+        value: true,
+      },
+    ]);
+
+    const ff = all.map(async (item, index) => {
+      const itemCategoryId = item?.category?.id;
+      let itemCategorySortOrder = 1000;
+
+      if (itemCategoryId) {
+        const itemCategory = await CategoryModel.findById(itemCategoryId);
+
+        if (itemCategory) {
+          itemCategorySortOrder = itemCategory.sortOrder || 1000;
+        }
+      }
+
+      return MenuItemModel.update(item.id as string, {
+        sortOrder: itemCategorySortOrder + index + 1,
+      });
+    });
+
+    await Promise.all(ff);
+  }
+
+  async sortDown(id: string, categoryId: string): Promise<MenuItem> {
     const current = await this.findById(id);
+    const currentCategory = await CategoryModel.findById(categoryId);
+
+    const currentCategorySortOrder = currentCategory?.sortOrder || 1000;
+
+    console.log({ current, currentCategory });
+
+    if (!current) {
+      badRequest("Item não encontrado");
+    }
+
+    if (!current?.sortOrder) {
+      current!["sortOrder"] = currentCategorySortOrder + 1;
+    }
 
     if (!current) {
       badRequest("Não foi possível encontrar a categoria");
@@ -28,7 +85,11 @@ class MenuItemEntity extends BaseEntity<MenuItem> {
     }
 
     const next = nextValues[0];
-    const nextValueSortOrder = next.sortOrder;
+    let nextValueSortOrder = next.sortOrder;
+
+    if (!nextValueSortOrder) {
+      nextValueSortOrder = currentCategorySortOrder + 1;
+    }
 
     next.sortOrder = current!.sortOrder;
     current!.sortOrder = nextValueSortOrder;
@@ -44,14 +105,21 @@ class MenuItemEntity extends BaseEntity<MenuItem> {
     return current!;
   }
 
-  async sortUp(id: string): Promise<MenuItem> {
+  async sortUp(id: string, categoryId: string): Promise<MenuItem> {
     const current = await this.findById(id);
+    const currentCategory = await CategoryModel.findById(categoryId);
+
+    const currentCategorySortOrder = currentCategory?.sortOrder || 1000;
 
     if (!current) {
-      badRequest("Categoria não encontrada");
+      badRequest("Item não encontrado");
     }
 
-    if (current?.sortOrder === 1000) {
+    if (!current?.sortOrder) {
+      current!["sortOrder"] = currentCategorySortOrder + 1;
+    }
+
+    if (current?.sortOrder === currentCategorySortOrder + 1) {
       return current;
     }
 
@@ -70,7 +138,7 @@ class MenuItemEntity extends BaseEntity<MenuItem> {
       {
         field: "sortOrder",
         op: ">=",
-        value: 1000,
+        value: currentCategorySortOrder + 1,
       },
     ]);
 
@@ -79,8 +147,11 @@ class MenuItemEntity extends BaseEntity<MenuItem> {
     }
 
     const previousValue = previous[0];
-
     const previousSortOrder = previousValue.sortOrder;
+
+    if (!previousSortOrder) {
+      previousValue.sortOrder = currentCategorySortOrder + 1;
+    }
 
     previousValue.sortOrder = current!.sortOrder;
     current!.sortOrder = previousSortOrder;

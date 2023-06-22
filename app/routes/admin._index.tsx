@@ -17,6 +17,9 @@ import type { Category } from "~/domain/category/category.model.server";
 import type { MenuItem } from "~/domain/menu-item/menu-item.model.server";
 import { menuEntity } from "~/domain/menu-item/menu-item.entity.server";
 import { ok } from "~/utils/http-response.server";
+import SortingOrderItems from "~/components/primitives/sorting-order-items/sorting-order-items";
+import Tabs from "~/components/primitives/tabs/tabs";
+import { urlAt } from "~/utils/url";
 
 export const meta: V2_MetaFunction = () => {
     return [
@@ -33,7 +36,13 @@ export const meta: V2_MetaFunction = () => {
 
 type MenuWithCreateDate = MenuItem & { createdAt: string }
 
-export async function loader() {
+export async function loader({ request }: LoaderArgs) {
+    const url = new URL(request.url)
+    const tab = url.searchParams.get('tab')
+
+    if (!tab) {
+        return redirect('/admin?tab=all')
+    }
 
     const items = await menuEntity.findAll() as MenuWithCreateDate[]
     const categories = await categoryEntity.findAll()
@@ -115,18 +124,50 @@ export async function action({ request }: LoaderArgs) {
         return redirect(`/admin`)
     }
 
+    if (_action === "item-sortorder-up") {
+        await menuEntity.sortUp(values.id as string, values.groupId as string)
+    }
+
+    if (_action === "item-sortorder-down") {
+        await menuEntity.sortDown(values.id as string, values.groupId as string)
+    }
+
+
     return null
 }
 
-export default function AdminIndex() {
+export type MenuItemActionSearchParam = "menu-item-create" | "menu-item-edit" | "menu-item-delete" | "menu-items-sortorder" | null
+
+export default function AdminCardapio() {
     const loaderData = useLoaderData<typeof loader>()
     const items = loaderData.payload.items as MenuItem[]
+    const categories = loaderData.payload.categories as Category[]
 
     const [searchParams, setSearchParams] = useSearchParams()
-    const action = searchParams.get("_action")
-    const itemId = searchParams.get("id")
+    const action = searchParams.get("_action") as MenuItemActionSearchParam
 
+    const itemId = searchParams.get("id")
     const itemToEdit = items.find(item => item.id === itemId) as MenuItem
+
+
+    const currentCategoryTab = searchParams.get("tab")
+    const itemsFiltered = items.filter(item => {
+        if (currentCategoryTab) {
+            if (currentCategoryTab === "all") return true
+            return item.category?.id === currentCategoryTab
+        }
+        return true
+    })
+
+    const itemsFilteredSorted = itemsFiltered.sort((a, b) => {
+        if ((a.sortOrder || 0) > (b.sortOrder || 0)) {
+            return 1
+        }
+        if ((a.sortOrder || 0) < (b.sortOrder || 0)) {
+            return -1
+        }
+        return 0
+    })
 
 
 
@@ -141,35 +182,24 @@ export default function AdminIndex() {
                         />
                     </Form>
                 </div>
-                <div className="flex gap-2">
-                    <Link to="?_action=menu-items-sortorder" className="mr-4">
-                        <span className="text-sm underline">Ordenamento</span>
-                    </Link>
-                    {action === "menu-items-sortorder" && (
-                        <Link to="/admin" className="mr-4">
-                            <span className="text-sm underline">Fechar Ordenamento</span>
+                {currentCategoryTab !== "all" && (
+                    <div className="flex gap-2">
+                        <Link to={`?tab=${currentCategoryTab}&_action=menu-items-sortorder`} className="mr-4">
+                            <span className="text-sm underline">Ordenamento</span>
                         </Link>
-                    )}
-                </div>
-                {(action === "menu-item-edit" || action === "menu-item-create") && <MenuItemForm item={itemToEdit} action={action} />}
+                        {action === "menu-items-sortorder" && (
+                            <Link to="/admin" className="mr-4">
+                                <span className="text-sm underline">Fechar Ordenamento</span>
+                            </Link>
+                        )}
+                    </div>
+                )}
+                <MenuItemForm item={itemToEdit} action={action} />
             </div>
-
-            {(action === "menu-item-edit" || action === "menu-item-create") ? null :
-                <ul className="mt-32">
-                    {
-                        (!items || items.length === 0) ?
-                            <NoRecordsFound text="Nenhum itens no menu" />
-                            :
-                            items.map(item => {
-                                return (
-                                    <li key={item.id} className="mb-4">
-                                        <MenuItemList item={item} />
-                                    </li>
-                                )
-                            })
-                    }
-                </ul>
-            }
+            <div className="mt-40 min-w-[350px]">
+                <CategoriesTabs categories={categories} />
+                <MenuItemList items={itemsFilteredSorted} action={action} />
+            </div>
 
         </Container>
     )
@@ -178,7 +208,7 @@ export default function AdminIndex() {
 
 interface MenuItemFormProps {
     item: MenuItem
-    action: "menu-item-create" | "menu-item-edit"
+    action: Partial<MenuItemActionSearchParam>
 }
 
 function MenuItemForm({ item, action }: MenuItemFormProps) {
@@ -191,6 +221,8 @@ function MenuItemForm({ item, action }: MenuItemFormProps) {
 
     const submitButtonIdleText = action === "menu-item-edit" ? "Atualizar" : "Criar"
     const submitButtonLoadingText = action === "menu-item-edit" ? "Atualizando..." : "Criando..."
+
+    if (action !== "menu-item-edit" && action !== "menu-item-create") return null
 
     return (
 
@@ -211,7 +243,7 @@ function MenuItemForm({ item, action }: MenuItemFormProps) {
                     <Fieldset>
                         <div className="md:max-w-[150px]">
                             <Select name="categoryId" required defaultValue={item?.category?.id ?? undefined}>
-                                <SelectTrigger>
+                                <SelectTrigger >
                                     <SelectValue placeholder="Categoria" />
                                 </SelectTrigger>
                                 <SelectContent id="categoryId"   >
@@ -266,11 +298,65 @@ function InputItem({ ...props }) {
     )
 }
 
+
 interface MenuItemListProps {
+    items: MenuItem[]
+    action: Partial<MenuItemActionSearchParam>
+}
+
+function MenuItemList({ items, action }: MenuItemListProps) {
+    if (action === "menu-item-edit" || action === "menu-item-create") return null
+
+    return (
+        <ul>
+            {
+                (!items || items.length === 0) ?
+                    <NoRecordsFound text="Nenhum itens no menu" />
+                    :
+                    items.map(item => {
+                        return (
+                            <li key={item.id} className="mb-4">
+                                <MenuItemCard item={item} />
+                            </li>
+                        )
+                    })
+            }
+        </ul>
+    )
+}
+
+
+function CategoriesTabs({ categories }: { categories: Category[] }) {
+    const categoryTabs = categories.map(category => (
+        {
+            id: category.id ?? "",
+            name: category.name,
+            linkTo: `/admin?tab=${category.name}&categoryId=${category.id}`,
+            default: category.name === "Classica"
+        }
+    ))
+
+
+    const tabs = [
+        {
+            id: "all",
+            name: "Todas",
+            linkTo: "/admin",
+            default: true
+        },
+        ...categoryTabs
+    ]
+
+    return <Tabs tabs={tabs} />
+}
+
+
+
+interface MenuItemCardProps {
     item: MenuItem
 }
 
-function MenuItemList({ item }: MenuItemListProps) {
+function MenuItemCard({ item }: MenuItemCardProps) {
     const loaderData = useLoaderData<typeof loader>()
     const categories = loaderData.payload.categories as Category[]
 
@@ -286,69 +372,73 @@ function MenuItemList({ item }: MenuItemListProps) {
     const missingInfo = !item?.name || !item?.price || !item?.ingredients || !item?.ingredientsIta
 
 
+    const [searchParams, setSearchParams] = useSearchParams()
+    const action = searchParams.get("_action")
 
     return (
 
         <div className={`border-2 border-muted rounded-lg p-4 flex flex-col gap-2`}>
-            <div className="flex flex-col gap-4">
-                <div className="flex justify-between items-center">
-                    <h2 className="text-lg font-bold tracking-tight">{pizzaTitle}</h2>
-                    <Link to={`?_action=menu-item-edit&id=${item.id}`} >
-                        <Edit size={24} className="cursor-pointer" />
-                    </Link>
-                </div>
-                <h3 className="flex gap-2">
-                    <span className="text-sm font-semibold text-muted-foreground">Cátegoria:</span>
-                    <span className="text-sm">{pizzaCategory?.name}</span>
-                </h3>
-                <div className="flex justify-between w-full">
-                    <span className="font-semibold text-sm">Pública no cardápio</span>
-                    <Switch id="visible" name="visible" defaultChecked={item.visible} disabled />
-                </div>
-            </div>
-            <div>
-                <span className="text-xs underline" onClick={() => setShowDetails(!showDetails)}>Detalhes</span>
-                {
-                    showDetails && (
-                        <div className="mt-2">
-                            {/* <p className="text-gray-500">{item.description}</p> */}
-                            <div className="flex flex-col mb-2">
-                                <span className="font-semibold text-sm">Preço:</span>
-                                <div className="flex gap-2">
-                                    <span className="text-gray-500 text-sm">R$</span>
-                                    <p className="text-gray-500 text-sm">{item.price}</p>
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col gap-2 mb-2">
-                                <div className="flex flex-col">
-                                    <span className="font-semibold text-sm">Ingredientes</span>
-                                    <p className="text-gray-500 text-sm">{ingredientsString}</p>
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="font-semibold text-sm">Ingredientes em Italiano</span>
-                                    <p className="text-gray-500 text-sm">{ingredientsItaString}</p>
-                                </div>
-                            </div>
-                        </div>
-                    )
-                }
-            </div>
-
-            {missingInfo && item.visible === true && (
-                <div className="border-2 border-red-500 bg-red-200 rounded-md p-4">
-                    <div className="flex gap-2">
-                        <AlertCircle color="red" />
-                        <div className="flex flex-col gap-1">
-                            {(item?.name === undefined || item.name === "") && <span className="text-xs font-semibold text-red-500">Nome não cadastrado</span>}
-                            {(item?.price === undefined || item.price === "") && <span className="text-xs font-semibold text-red-500">Preço não cadastrado</span>}
-                            {(item?.ingredients === undefined || item.ingredients.length === 0) && <span className="text-xs font-semibold text-red-500">Ingredientes não cadastrados</span>}
-                            {(item?.ingredientsIta === undefined || item.ingredientsIta.length === 0) && <span className="text-xs font-semibold text-red-500">Ingredientes em Italiano não cadastrados</span>}
-                        </div>
-
+            <SortingOrderItems enabled={action === "menu-items-sortorder"} itemId={item.id} groupId={pizzaCategory?.id}>
+                <div className="flex flex-col gap-4">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-lg font-bold tracking-tight">{pizzaTitle}</h2>
+                        <Link to={`?_action=menu-item-edit&id=${item.id}`} >
+                            <Edit size={24} className="cursor-pointer" />
+                        </Link>
+                    </div>
+                    <h3 className="flex gap-2">
+                        <span className="text-sm font-semibold text-muted-foreground">Cátegoria:</span>
+                        <span className="text-sm">{pizzaCategory?.name}</span>
+                    </h3>
+                    <div className="flex justify-between w-full">
+                        <span className="font-semibold text-sm">Pública no cardápio</span>
+                        <Switch id="visible" name="visible" defaultChecked={item.visible} disabled />
                     </div>
                 </div>
-            )}
+                <div>
+                    <span className="text-xs underline" onClick={() => setShowDetails(!showDetails)}>Detalhes</span>
+                    {
+                        showDetails && (
+                            <div className="mt-4">
+                                {/* <p className="text-gray-500">{item.description}</p> */}
+                                <div className="flex flex-col mb-2">
+                                    <span className="font-semibold text-sm">Preço:</span>
+                                    <div className="flex gap-2">
+                                        <span className="text-gray-500 text-sm">R$</span>
+                                        <p className="text-gray-500 text-sm">{item.price}</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col gap-2 mb-2">
+                                    <div className="flex flex-col">
+                                        <span className="font-semibold text-sm">Ingredientes</span>
+                                        <p className="text-gray-500 text-sm">{ingredientsString}</p>
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="font-semibold text-sm">Ingredientes em Italiano</span>
+                                        <p className="text-gray-500 text-sm">{ingredientsItaString}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    }
+                </div>
+
+                {missingInfo && item.visible === true && (
+                    <div className="border-2 border-red-500 bg-red-200 rounded-md p-4 mt-4">
+                        <div className="flex gap-2">
+                            <AlertCircle color="red" />
+                            <div className="flex flex-col gap-1">
+                                {(item?.name === undefined || item.name === "") && <span className="text-xs font-semibold text-red-500">Nome não cadastrado</span>}
+                                {(item?.price === undefined || item.price === "") && <span className="text-xs font-semibold text-red-500">Preço não cadastrado</span>}
+                                {(item?.ingredients === undefined || item.ingredients.length === 0) && <span className="text-xs font-semibold text-red-500">Ingredientes não cadastrados</span>}
+                                {(item?.ingredientsIta === undefined || item.ingredientsIta.length === 0) && <span className="text-xs font-semibold text-red-500">Ingredientes em Italiano não cadastrados</span>}
+                            </div>
+
+                        </div>
+                    </div>
+                )}
+            </SortingOrderItems>
         </div>
 
     )

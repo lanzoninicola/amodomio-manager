@@ -7,10 +7,10 @@ class CategoryEntity extends BaseEntity<Category> {
   override async create(category: Category): Promise<Category> {
     this.validate(category);
 
-    const latestCategory = await this.getLatest();
+    const latest = await this.getLatest();
 
-    if (latestCategory) {
-      category.sortOrder = (latestCategory?.sortOrder || 0) + 1000;
+    if (latest) {
+      category.sortOrder = (latest?.sortOrder || 0) + 1000;
     } else {
       category.sortOrder = 1000;
     }
