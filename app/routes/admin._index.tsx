@@ -16,10 +16,10 @@ import { categoryEntity } from "~/domain/category/category.entity.server";
 import type { Category } from "~/domain/category/category.model.server";
 import type { MenuItem } from "~/domain/menu-item/menu-item.model.server";
 import { menuEntity } from "~/domain/menu-item/menu-item.entity.server";
-import { ok } from "~/utils/http-response.server";
+import { badRequest, ok } from "~/utils/http-response.server";
 import SortingOrderItems from "~/components/primitives/sorting-order-items/sorting-order-items";
 import Tabs from "~/components/primitives/tabs/tabs";
-import { urlAt } from "~/utils/url";
+import sort from "~/utils/sort";
 
 export const meta: V2_MetaFunction = () => {
     return [
@@ -48,16 +48,7 @@ export async function loader({ request }: LoaderArgs) {
     const categories = await categoryEntity.findAll()
 
     // order by created at
-    const sortedItems = items.sort((a, b) => {
-        if (a.createdAt > b.createdAt) {
-            return -1
-        }
-        if (a.createdAt < b.createdAt) {
-            return 1
-        }
-        return 0
-    })
-
+    const sortedItems = sort(items, "createdAt", "desc")
 
     return ok({
         items: sortedItems,
@@ -86,6 +77,10 @@ export async function action({ request }: LoaderArgs) {
         // const description = values.description as string
         const price = values.price as string
         const categoryId = values.categoryId as string
+
+        if (!categoryId) {
+            badRequest("Categoria é obrigatória")
+        }
 
         const menuItem: MenuItem = {
             id: values.id as string,
@@ -159,15 +154,17 @@ export default function AdminCardapio() {
         return true
     })
 
-    const itemsFilteredSorted = itemsFiltered.sort((a, b) => {
-        if ((a.sortOrder || 0) > (b.sortOrder || 0)) {
-            return 1
-        }
-        if ((a.sortOrder || 0) < (b.sortOrder || 0)) {
-            return -1
-        }
-        return 0
-    })
+    // const itemsFilteredSorted = itemsFiltered.sort((a, b) => {
+    //     if ((a.sortOrder || 0) > (b.sortOrder || 0)) {
+    //         return 1
+    //     }
+    //     if ((a.sortOrder || 0) < (b.sortOrder || 0)) {
+    //         return -1
+    //     }
+    //     return 0
+    // })
+
+    const itemsFilteredSorted = sort(itemsFiltered, "sortOrder", "asc")
 
 
 
@@ -242,7 +239,7 @@ function MenuItemForm({ item, action }: MenuItemFormProps) {
                 <Fieldset>
                     <Fieldset>
                         <div className="md:max-w-[150px]">
-                            <Select name="categoryId" required defaultValue={item?.category?.id ?? undefined}>
+                            <Select name="categoryId" defaultValue={item?.category?.id ?? undefined}>
                                 <SelectTrigger >
                                     <SelectValue placeholder="Categoria" />
                                 </SelectTrigger>

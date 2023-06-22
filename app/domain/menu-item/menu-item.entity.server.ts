@@ -68,11 +68,11 @@ class MenuItemEntity extends BaseEntity<MenuItem> {
     }
 
     const nextValues = await MenuItemModel.whereCompound([
-      {
-        field: "visible",
-        op: "==",
-        value: true,
-      },
+      // {
+      //   field: "visible",
+      //   op: "==",
+      //   value: true,
+      // },
       {
         field: "sortOrder",
         op: ">",
@@ -129,11 +129,11 @@ class MenuItemEntity extends BaseEntity<MenuItem> {
         op: "<",
         value: current!.sortOrder,
       },
-      {
-        field: "visible",
-        op: "==",
-        value: true,
-      },
+      // {
+      //   field: "visible",
+      //   op: "==",
+      //   value: true,
+      // },
 
       {
         field: "sortOrder",
