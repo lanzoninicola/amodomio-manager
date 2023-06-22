@@ -1,65 +1,66 @@
 [
     {
-        "id": "1",
         "name": "A Verdadeira Margherita",
         "description": "",
         "ingredients": [
-            "mussarella",
             "tomate",
-            "oregano",
+            "mussarella",
+            "parmesão",
             "basilico"
         ],
         "ingredients_ita": [
-            "mozzarella",
             "pomodoro",
-            "origano",
+            "mozzarella",
+            "parmigiano",
             "basilico"
         ],
-        "price": "R$ 30,00"
+        "price": "R$ 30,00",
+        "visible": true
     },
     {
-        "id": "2",
-        "name": "A Verdadeira Margherita",
+        "name": "Margherita Invertida",
         "description": "",
         "ingredients": [
-            "mussarella",
             "tomate",
-            "oregano",
-            "basilico"
+            "mussarella",
+            "salsinha",
+            "salsa verde da casa"
         ],
         "ingredients_ita": [
-            "mozzarella",
             "pomodoro",
+            "mozzarella",
             "origano",
             "basilico"
         ],
-        "price": "R$ 30,00"
+        "price": "R$ 30,00",
+        "visible": false
     },
     {
-        "id": "3",
-        "name": "A Verdadeira Margherita",
+        "name": "Quatro Queijos",
         "description": "",
         "ingredients": [
-            "mussarella",
             "tomate",
-            "oregano",
-            "basilico"
+            "gorzonzola",
+            "parmesão",
+            "queijo defumado",
+            "creme de ricota"
         ],
         "ingredients_ita": [
-            "mozzarella",
             "pomodoro",
-            "origano",
-            "basilico"
+            "gorzonzola",
+            "parmigiano",
+            "formaggio affumicato",
+            "crema di ricotta"
         ],
-        "price": "R$ 30,00"
+        "price": "R$ 30,00",
+        "visible": true
     },
     {
-        "id": "4",
-        "name": "A Verdadeira Margherita",
+        "name": "Calabresa acebolada",
         "description": "",
         "ingredients": [
-            "mussarella",
             "tomate",
+            "mussarella",
             "oregano",
             "basilico"
         ],
@@ -69,11 +70,11 @@
             "origano",
             "basilico"
         ],
-        "price": "R$ 30,00"
+        "price": "R$ 30,00",
+        "visible": true
     },
     {
-        "id": "5",
-        "name": "A Verdadeira Margherita",
+        "name": "Portuguesa",
         "description": "",
         "ingredients": [
             "mussarella",
@@ -87,11 +88,11 @@
             "origano",
             "basilico"
         ],
-        "price": "R$ 30,00"
+        "price": "R$ 30,00",
+        "visible": true
     },
     {
-        "id": "6",
-        "name": "A Verdadeira Margherita",
+        "name": "Frango con catupry",
         "description": "",
         "ingredients": [
             "mussarella",
@@ -105,78 +106,85 @@
             "origano",
             "basilico"
         ],
-        "price": "R$ 30,00"
+        "price": "R$ 30,00",
+        "visible": true
     },
     {
-        "id": "7",
-        "name": "A Verdadeira Margherita",
+        "name": "Contadina",
         "description": "",
         "ingredients": [
-            "mussarella",
             "tomate",
-            "oregano",
-            "basilico"
+            "mussarella",
+            "linguiça",
+            "batate assada com rosmarino"
         ],
         "ingredients_ita": [
-            "mozzarella",
             "pomodoro",
-            "origano",
-            "basilico"
+            "mozzarella",
+            "salsiccia",
+            "patate al rosmarino"
         ],
-        "price": "R$ 30,00"
+        "price": "R$ 30,00",
+        "visible": true
     },
     {
-        "id": "8",
-        "name": "A Verdadeira Margherita",
+        "name": "Fresca",
         "description": "",
         "ingredients": [
             "mussarella",
-            "tomate",
-            "oregano",
-            "basilico"
+            "abobrinha",
+            "pimentão amarelo",
+            "burata de búfala",
+            "salsa verde da casa"
         ],
         "ingredients_ita": [
             "mozzarella",
-            "pomodoro",
-            "origano",
-            "basilico"
+            "zucchine",
+            "peperoni gialli",
+            "burrata di bufala",
+            "salsa verde della casa"
         ],
-        "price": "R$ 30,00"
+        "price": "R$ 30,00",
+        "visible": true
     },
     {
-        "id": "9",
-        "name": "A Verdadeira Margherita",
+        "name": "Vegetariana",
         "description": "",
         "ingredients": [
             "mussarella",
             "tomate",
-            "oregano",
-            "basilico"
+            "berinjelas",
+            "pimentão amarelo",
+            "pimentão vermelho",
+            "abobrinhas"
         ],
         "ingredients_ita": [
             "mozzarella",
             "pomodoro",
-            "origano",
-            "basilico"
+            "melanzane",
+            "peperoni gialli",
+            "peperoni rossi",
+            "zucchine"
         ],
-        "price": "R$ 30,00"
+        "price": "R$ 30,00",
+        "visible": true
     },
     {
-        "id": "10",
-        "name": "A Verdadeira Margherita",
+        "name": "Tomate Seco e Rúcula",
         "description": "",
         "ingredients": [
             "mussarella",
             "tomate",
-            "oregano",
-            "basilico"
+            "rúcula",
+            "tomate seco"
         ],
         "ingredients_ita": [
             "mozzarella",
             "pomodoro",
-            "origano",
-            "basilico"
+            "rucola",
+            "pomodoro secchi"
         ],
-        "price": "R$ 30,00"
+        "price": "R$ 30,00",
+        "visible": true
     }
 ]

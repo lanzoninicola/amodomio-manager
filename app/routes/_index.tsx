@@ -1,12 +1,8 @@
 import { type V2_MetaFunction } from "@remix-run/node";
 import { Link } from "@remix-run/react";
 import { ArrowRight } from "lucide-react";
-import React from "react";
-import Container from "~/components/layout/container/container";
 import { LogoTransparent } from "~/components/primitives/logo/logo";
 
-import SplashScreen from "~/components/primitives/splash-screen/splash-screen";
-import { cn } from "~/lib/utils";
 
 export const meta: V2_MetaFunction = () => {
     return [

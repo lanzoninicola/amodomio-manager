@@ -37,7 +37,7 @@ export class BaseEntity<T> {
     return await this.model.update(id, updatedData);
   }
 
-  protected async delete(id: string) {
+  async delete(id: string) {
     return await this.model.delete(id);
   }
 
