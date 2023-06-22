@@ -1,13 +1,12 @@
-import type { ActionArgs, LoaderArgs } from "@remix-run/node";
+import type { ActionArgs, LinksFunction, LoaderArgs } from "@remix-run/node";
 import { type V2_MetaFunction } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useNavigate } from "@remix-run/react";
 
 import { ItalianFlagSmall, LogoTransparent } from "~/components/primitives/logo/logo";
 import { ok } from "~/utils/http-response.server";
-import menu from "../content/cardapio.json";
-import { PizzaIcon } from "~/components/primitives/icons/icons";
 import { menuEntity } from "~/domain/menu-item/menu-item.entity";
 import type { MenuItem } from "~/domain/menu-item/menu-item";
+import { useEffect, useState } from "react";
 
 export const meta: V2_MetaFunction = () => {
   return [
@@ -19,24 +18,24 @@ export const meta: V2_MetaFunction = () => {
   ];
 };
 
-interface Pizza {
-  id: string
-  name: string
-  ingredients: string[]
-  ingredients_ita: string[]
-  description: string
-  price: string
-
-}
-
-type Menu = Pizza[]
+export const links: LinksFunction = () => [
+  { rel: "preconnect", href: "https://fonts.googleapis.com" },
+  {
+    rel: "preconnect",
+    href: "https://fonts.gstatic.com",
+  },
+  {
+    href: "https://fonts.googleapis.com/css2?family=BioRhyme+Expanded:wght@700&family=Inconsolata:wght@400&display=swap",
+    rel: "stylesheet",
+  },
+];
 
 export async function loader({ request }: LoaderArgs) {
 
-  const menuItems = await menuEntity.findAll() as Menu
+  const menuItems = await menuEntity.findAll() as MenuItem[]
 
   return ok({
-    items: menuItems
+    items: menuItems.filter(item => item.visible).map(item => item as MenuItem),
   })
 }
 
@@ -44,19 +43,47 @@ export async function action({ request }: ActionArgs) {
   return null
 }
 
-export default function HomePage() {
+export default function MenuPage() {
 
   return (
 
     <div className="md:h-screen bg-brand-yellow flex flex-col">
-      <div className="py-6 md:py-12 flex justify-center">
-        <LogoTransparent />
+      <div className="py-6 md:py-12 flex justify-center z-20">
+        <LogoWithEasternEgg />
       </div>
       <div className="p-4 md:p-0">
         <Content />
       </div>
     </div >
   );
+}
+
+function LogoWithEasternEgg() {
+  const navigate = useNavigate()
+  const [clickedAmount, setClickedAmount] = useState(0)
+
+  console.log('clickedAmount', clickedAmount)
+
+  const handleClick = () => {
+    setClickedAmount(clickedAmount + 1)
+  }
+
+  const isClickedEnough = clickedAmount > 3
+
+
+  useEffect(() => {
+    if (isClickedEnough) {
+      navigate('/admin')
+
+    }
+  }, [isClickedEnough, navigate])
+
+
+  return (
+    <div onClick={handleClick} >
+      <LogoTransparent />
+    </div>
+  )
 }
 
 
@@ -78,7 +105,7 @@ function Content() {
                 <div className="flex- flex-col">
                   <PizzaTitle>{item.name}</PizzaTitle>
                   {item.description && <p>{item.description}</p>}
-                  <p className="text-lg font-semibold">{ingredientsString}</p>
+                  <p className="text-lg font-semibold font-menu leading-tight">{ingredientsString}</p>
                   <ItalianIngredientList ingredients={item?.ingredientsIta || []} />
                   <p>{item.description}</p>
                   <Price>{item.price}</Price>
@@ -103,9 +130,9 @@ interface PizzaTitleProps {
 function PizzaTitle({ children }: PizzaTitleProps) {
 
   return (
-    <div className="flex gap-1 mb-2 md:mb-0 items-center">
-      <PizzaIcon />
-      <h3 className="text-base font-bold font-accent uppercase">{children}</h3>
+    <div className="flex gap-1 mb-1 md:mb-0 items-center tracking-tight">
+      {/* <PizzaIcon /> */}
+      <span className="text-base font-bold font-accent uppercase">{children}</span>
     </div>
   )
 }
@@ -120,8 +147,10 @@ function ItalianIngredientList({ ingredients }: ItalianIngredientListProps) {
 
   return (
     <div className="flex gap-1 items-center">
-      <ItalianFlagSmall className="w-[17px] h-[12px]" />
-      <p className="text-base font-light">{ingredientsString}</p>
+      <div className="relative">
+        <ItalianFlagSmall className="absolute top-2 left-0 w-[17px] h-[12px]" />
+        <span className="ml-6 text-base font-light font-menu">{ingredientsString}</span>
+      </div>
     </div>
   )
 
@@ -135,7 +164,10 @@ interface PriceProps {
 function Price({ children }: PriceProps) {
 
   return (
-    <span className="text-xs font-semibold text-black">{children}</span>
+    <div className="flex gap-1 mt-2">
+      <span className="text-xs font-semibold text-black">R$</span>
+      <span className="text-xs font-semibold text-black">{children}</span>
+    </div>
   )
 
 }

@@ -1,5 +1,6 @@
 import { type LinksFunction } from "@remix-run/node";
 import { Outlet } from "@remix-run/react";
+import { NavMenuCollapsible } from "~/components/primitives/menu-collapsible/menu-collapsible";
 
 export const links: LinksFunction = () => [
     { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -16,5 +17,19 @@ export const links: LinksFunction = () => [
 
 export default function AdminOutlet() {
 
-    return <Outlet />
+    return (
+
+        <div className="flex flex-col">
+            <div className="fixed h-auto w-full bg-muted z-50">
+                <NavMenuCollapsible navItems={
+                    [
+                        { label: "Cardápio", to: "/admin" },
+                        { label: "Categorias", to: "/admin/categorias" },
+                    ]
+                } />
+            </div>
+            <Outlet />
+        </div>
+    )
 }
+

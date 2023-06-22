@@ -64,6 +64,22 @@ function LinkCardapio() {
     )
 }
 
+
+
+function Heading() {
+    return (
+        <div className="flex flex-col gap-4">
+            <h1 className="flex flex-col">
+                <span className="font-accent uppercase text-xl">a pizza</span>
+                <span className="font-logo text-2xl text-brand-cloud font-bold">a modo mio</span>
+                <span className="font-accent uppercase text-xl">não é a</span>
+                <span className="font-accent uppercase text-xl tracking-[10px]">pizza</span>
+                <span className="font-accent uppercase text-xl tracking-[3px]">comum</span>
+            </h1>
+        </div>
+    )
+}
+
 function DecorativePizzaDeliverySentence() {
     return (
         <div className="relative ">
@@ -80,20 +96,6 @@ function DecorativeAModoMioSentence() {
             <div className="absolute left-12 md:left-60 top-0 origin-top-left rotate-90 whitespace-nowrap bg-brand-orange">
                 {Array.from({ length: 20 }).map((_, i) => <span key={i} className="font-logo text-lg md:text-3xl text-center">a modo mio</span>)}
             </div>
-        </div>
-    )
-}
-
-function Heading() {
-    return (
-        <div className="flex flex-col gap-4">
-            <h1 className="flex flex-col">
-                <span className="font-accent uppercase text-xl">a pizza</span>
-                <span className="font-logo text-2xl text-brand-cloud font-bold">a modo mio</span>
-                <span className="font-accent uppercase text-xl">não é a</span>
-                <span className="font-accent uppercase text-xl tracking-[10px]">pizza</span>
-                <span className="font-accent uppercase text-xl tracking-[3px]">comum</span>
-            </h1>
         </div>
     )
 }

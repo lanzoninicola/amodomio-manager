@@ -4,6 +4,7 @@ interface Category {
   id?: string;
   name: string;
   type: "topping" | "menu";
+  visible: boolean;
 }
 
 interface CategoryMenu extends Category {

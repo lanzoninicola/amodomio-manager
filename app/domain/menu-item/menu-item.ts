@@ -8,6 +8,9 @@ export interface MenuItem {
   ingredientsIta?: string[];
   price?: string;
   visible?: boolean;
+  category?: {
+    id: string;
+  };
 }
 
 const MenuItemModel = createFirestoreModel<MenuItem>("menu_items");
