@@ -14,8 +14,8 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Switch } from "~/components/ui/switch";
 import { categoryEntity } from "~/domain/category/category.entity.server";
 import type { Category } from "~/domain/category/category.model.server";
-import type { MenuItem } from "~/domain/menu-item/menu-item";
-import { menuEntity } from "~/domain/menu-item/menu-item.entity";
+import type { MenuItem } from "~/domain/menu-item/menu-item.model.server";
+import { menuEntity } from "~/domain/menu-item/menu-item.entity.server";
 import { ok } from "~/utils/http-response.server";
 
 export const meta: V2_MetaFunction = () => {
@@ -140,6 +140,16 @@ export default function AdminIndex() {
                             disabled={action === "menu-item-create" || action === "menu-item-edit"}
                         />
                     </Form>
+                </div>
+                <div className="flex gap-2">
+                    <Link to="?_action=menu-items-sortorder" className="mr-4">
+                        <span className="text-sm underline">Ordenamento</span>
+                    </Link>
+                    {action === "menu-items-sortorder" && (
+                        <Link to="/admin" className="mr-4">
+                            <span className="text-sm underline">Fechar Ordenamento</span>
+                        </Link>
+                    )}
                 </div>
                 {(action === "menu-item-edit" || action === "menu-item-create") && <MenuItemForm item={itemToEdit} action={action} />}
             </div>

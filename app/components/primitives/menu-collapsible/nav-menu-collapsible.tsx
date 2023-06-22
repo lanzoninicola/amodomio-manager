@@ -42,8 +42,8 @@ export function NavMenuCollapsible({ navItems }: NavMenuCollapsibleProps) {
 
                         return (
                             <Link key={index} to={item.to}>
-                                <div className="rounded-md border px-4 py-3 font-mono text-sm mb-2 flex justify-between">
-                                    {item.label}
+                                <div className="rounded-md border px-4 py-3 font-mono text-sm mb-2 flex justify-between items-center">
+                                    <span>{item.label}</span>
                                     <ChevronRight />
                                 </div>
                             </Link>

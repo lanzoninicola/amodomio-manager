@@ -1,6 +1,6 @@
 import { type LinksFunction } from "@remix-run/node";
 import { Outlet } from "@remix-run/react";
-import { NavMenuCollapsible } from "~/components/primitives/menu-collapsible/menu-collapsible";
+import { NavMenuCollapsible } from "~/components/primitives/menu-collapsible/nav-menu-collapsible";
 
 export const links: LinksFunction = () => [
     { rel: "preconnect", href: "https://fonts.googleapis.com" },

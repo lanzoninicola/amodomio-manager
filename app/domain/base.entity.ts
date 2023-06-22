@@ -41,5 +41,9 @@ export class BaseEntity<T> {
     return await this.model.delete(id);
   }
 
+  async getLatest() {
+    return await this.model.getLatest();
+  }
+
   protected validate(record: T) {}
 }

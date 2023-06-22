@@ -4,7 +4,7 @@ import { useLoaderData, useNavigate } from "@remix-run/react";
 
 import { ItalianFlagSmall, LogoTransparent } from "~/components/primitives/logo/logo";
 import { ok } from "~/utils/http-response.server";
-import { menuEntity } from "~/domain/menu-item/menu-item.entity";
+import { menuEntity } from "~/domain/menu-item/menu-item.entity.server";
 import type { MenuItem } from "~/domain/menu-item/menu-item";
 import { useEffect, useState } from "react";
 

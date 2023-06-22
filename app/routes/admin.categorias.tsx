@@ -1,8 +1,7 @@
 import type { LoaderArgs } from "@remix-run/node";
 import { redirect, type V2_MetaFunction } from "@remix-run/node";
 import { Form, Link, useLoaderData, useSearchParams } from "@remix-run/react";
-import { AlertCircle, Edit, Trash } from "lucide-react";
-import { useState } from "react";
+import { ArrowDown, ArrowDownUp, ArrowUp, Edit, SortAsc, SortDesc, Trash } from "lucide-react";
 import Container from "~/components/layout/container/container";
 import NoRecordsFound from "~/components/primitives/no-records-found/no-records-found";
 import SubmitButton from "~/components/primitives/submit-button/submit-button";
@@ -10,6 +9,7 @@ import { Button } from "~/components/ui/button";
 import Fieldset from "~/components/ui/fieldset";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { Separator } from "~/components/ui/separator";
 import { Switch } from "~/components/ui/switch";
 import { categoryEntity } from "~/domain/category/category.entity.server";
 import type { Category } from "~/domain/category/category.model.server";
@@ -41,14 +41,15 @@ export async function action({ request }: LoaderArgs) {
 
     if (_action === "category-create") {
         const category: Category = {
-            name: values.name as string,
+            name: values.name as string || "",
             type: "menu",
-            visible: values.visible === "on" ? true : false
+            visible: values.visible === "on" ? true : false,
+            sortOrder: values?.sortOrder ? parseInt(values.sortOrder as string) : 0
         }
 
         const itemCreated = await categoryEntity.create(category)
 
-        return redirect(`/admin?_action=category-create&id=${itemCreated.id}`)
+        return redirect(`/admin/categorias?_action=category-create&id=${itemCreated.id}`)
     }
 
     if (_action === "category-edit") {
@@ -65,7 +66,15 @@ export async function action({ request }: LoaderArgs) {
 
     if (_action === "category-delete") {
         await categoryEntity.delete(values.id as string)
-        return redirect(`/admin`)
+        return redirect(`/admin/categorias`)
+    }
+
+    if (_action === "item-sortorder-up") {
+        await categoryEntity.sortUp(values.id as string)
+    }
+
+    if (_action === "item-sortorder-down") {
+        await categoryEntity.sortDown(values.id as string)
     }
 
     return null
@@ -74,6 +83,8 @@ export async function action({ request }: LoaderArgs) {
 export default function AdminCategories() {
     const loaderData = useLoaderData<typeof loader>()
     const categories = loaderData.payload.categories as Category[]
+
+    const categoriesSorted = categories.sort((a, b) => (a?.sortOrder || 0) - (b?.sortOrder || 0))
 
     const [searchParams, setSearchParams] = useSearchParams()
     const action = searchParams.get("_action")
@@ -94,18 +105,28 @@ export default function AdminCategories() {
                         />
                     </Form>
                 </div>
+                <div className="flex gap-2">
+                    <Link to="?_action=categories-sortorder" className="mr-4">
+                        <span className="text-sm underline">Ordenamento</span>
+                    </Link>
+                    {action === "categories-sortorder" && (
+                        <Link to="/admin/categorias" className="mr-4">
+                            <span className="text-sm underline">Fechar Ordenamento</span>
+                        </Link>
+                    )}
+                </div>
                 {(action === "category-edit" || action === "category-create") && <CategoryForm category={itemToEdit} action={action} />}
             </div>
 
-            <div className="min-w-[320px]">
+            <div className="min-w-[350px]">
                 {
                     (action === "category-edit" || action === "category-create") ? null :
-                        <ul className="mt-32">
+                        <ul className="mt-40">
                             {
                                 (!categories || categories.length === 0) ?
                                     <NoRecordsFound text="Nenhum itens no menu" />
                                     :
-                                    categories.map(category => {
+                                    categoriesSorted.map(category => {
                                         return (
                                             <li key={category.id} className="mb-4">
                                                 <CategoryList category={category} />
@@ -177,18 +198,60 @@ interface CategoryListProps {
 }
 
 function CategoryList({ category }: CategoryListProps) {
+    const [searchParams, setSearchParams] = useSearchParams()
+    const action = searchParams.get("_action")
+
     return (
         <div className={`border-2 border-muted rounded-lg p-4 flex flex-col gap-2 w-full`}>
-            <div className="flex justify-between mb-2">
-                <h2 className="font-lg font-bold tracking-tight">{category.name}</h2>
-                <Link to={`?_action=category-edit&id=${category.id}`} >
-                    <Edit size={16} className="cursor-pointer" />
-                </Link>
-            </div>
-            <div className="flex justify-between w-full">
-                <span className="font-semibold text-sm">Pública no cardápio</span>
-                <Switch id="visible" name="visible" defaultChecked={category.visible} disabled />
-            </div>
+
+            <SortingOrder enabled={action === "categories-sortorder"} itemId={category.id}>
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="font-lg font-bold tracking-tight">{category.name}</h2>
+                    <Link to={`?_action=category-edit&id=${category.id}`} >
+                        <Edit size={24} className="cursor-pointer" />
+                    </Link>
+                </div>
+                <div className="flex justify-between w-full">
+                    <span className="font-semibold text-sm">Pública no cardápio</span>
+                    <Switch id="visible" name="visible" defaultChecked={category.visible} disabled />
+                </div>
+            </SortingOrder>
         </div>
     )
+}
+
+
+interface SortingOrderProps {
+    itemId?: string
+    enabled: boolean
+    children: React.ReactNode
+}
+
+function SortingOrder({ enabled, itemId, children }: SortingOrderProps) {
+
+    if (enabled === false) return <>{children}</>
+
+    return (
+        <div className="grid grid-cols-[1fr_.15fr] gap-2">
+            <div>
+                {children}
+            </div>
+            <Form method="post">
+                <InputItem type="hidden" name="id" defaultValue={itemId} />
+                <div className="grid grid-rows-2 gap-2">
+                    <Button type="submit" variant="ghost" name="_action" value="item-sortorder-up" className="w-full">
+                        <div className="bg-muted flex items-center justify-center rounded-md p-2">
+                            <ArrowUp size={24} className="cursor-pointer" />
+                        </div>
+                    </Button>
+                    <Button type="submit" variant="ghost" name="_action" value="item-sortorder-down" className="w-full">
+                        <div className="bg-muted flex items-center justify-center rounded-md p-2">
+                            <ArrowDown size={24} className="cursor-pointer" />
+                        </div>
+                    </Button>
+                </div>
+            </Form>
+        </div>
+    )
+
 }

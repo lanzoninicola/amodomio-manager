@@ -4,6 +4,7 @@ interface Category {
   id?: string;
   name: string;
   type: "topping" | "menu";
+  sortOrder?: number;
   visible: boolean;
 }
 

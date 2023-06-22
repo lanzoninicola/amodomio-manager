@@ -11,6 +11,7 @@ export interface MenuItem {
   category?: {
     id: string;
   };
+  sortOrder?: number;
 }
 
 const MenuItemModel = createFirestoreModel<MenuItem>("menu_items");
