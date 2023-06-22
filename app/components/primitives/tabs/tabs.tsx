@@ -4,7 +4,8 @@ export interface TabItem {
     id: string
     name: string
     linkTo?: string
-    visibleCondition?: boolean
+    default?: boolean
+    disabled?: boolean
 }
 
 interface TabsProps {
@@ -14,7 +15,7 @@ interface TabsProps {
 
 export default function Tabs({ tabs }: TabsProps) {
     const [searchParams, setSearchParams] = useSearchParams()
-    const currentActiveTab = searchParams.get("tab")
+    let currentActiveTab = searchParams.get("tab")
 
     const activeTabStyle = "bg-primary text-white rounded-md py-1"
 
@@ -24,15 +25,19 @@ export default function Tabs({ tabs }: TabsProps) {
 
             {tabs.map((tab, idx) => {
 
+                if (!currentActiveTab) {
+                    if (tab.default === true) {
+                        currentActiveTab = tab.id
+                    }
+                }
+
                 const children = (
                     <div className={`${currentActiveTab === tab.id && activeTabStyle} m-1`}>
                         <span>{tab.name}</span>
                     </div>
                 )
 
-                if (tab.visibleCondition === false) return null
-
-                if (tab.linkTo) return (
+                if (tab.linkTo && tab.disabled === false) return (
                     <Link key={idx} to={tab.linkTo} className="w-1/2 md:w-1/4 lg:w-1/6 text-center">
                         {children}
                     </Link >

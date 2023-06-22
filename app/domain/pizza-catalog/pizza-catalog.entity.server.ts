@@ -2,14 +2,13 @@ import { badRequest, serverError } from "~/utils/http-response.server";
 import { CatalogModel } from "../catalog/catalog.model.server";
 import type { Catalog, CatalogItem } from "../catalog/catalog.model.server";
 import { CatalogEntity } from "../catalog/catalog.entity.server";
-import type { LatestSellPrice } from "../sell-price/sell-price.model.server";
 import type { CategoryMenu } from "../category/category.model.server";
-import type {
-  Pizza,
-  PizzaSizeVariation,
-  Topping,
-} from "../pizza/pizza.entity.server";
+import type { Pizza, Topping } from "../pizza/pizza.entity.server";
 import type { Size } from "../size/size.model.server";
+import { ProductEntity } from "../product/product.entity";
+import { categoryEntity } from "../category/category.entity.server";
+import { sizeEntity } from "../size/size.entity.server";
+import type { whereCompoundConditions } from "~/lib/firestore-model/src";
 
 // PIZZA CATALOG //
 export type PizzaCatalog = Omit<Catalog, "items"> & {
@@ -32,33 +31,100 @@ export interface PizzaSizeVariationsCatalog {
 
 export interface PizzaToppingCatalog {
   id: Topping["id"];
-  categoryId: string;
+  category: {
+    id: CategoryMenu["id"];
+  };
   unitPrice: number;
   unitPromotionalPrice: number;
 }
 
 class PizzaCatalogEntity extends CatalogEntity {
-  async getProducts(catalogId: string) {
-    const catalog = (await this.findById(catalogId)) as PizzaCatalog;
+  override async findAll(
+    conditions?: whereCompoundConditions | undefined
+  ): Promise<PizzaCatalog[]> {
+    const pizzaCatalogs = await super.findAll([
+      {
+        field: "type",
+        op: "==",
+        value: "pizza",
+      },
+      ...(conditions || []),
+    ]);
 
-    if (!catalog) {
-      return badRequest("Catálogo não encontrado");
-    }
+    return pizzaCatalogs as PizzaCatalog[];
+  }
 
-    const items = catalog.items || [];
+  async getAllProductsFromAllCatalogs() {
+    const catalogs = await this.findAll();
 
-    const pizzaCatalogItems = items as PizzaCatalogItem[];
+    const pizzaCatalogsWithProducts = catalogs.map(async (catalog) => {
+      if (!catalog) return null;
+      if (!catalog.id) return null;
 
-    const products = pizzaCatalogItems.map((item) => {
-      const product = item.product;
+      const products = await this.getAllProducts(catalog.id);
 
       return {
-        id: product.id,
-        sizes: product.sizes,
+        catalogId: catalog.id,
+        products,
       };
     });
 
-    return products;
+    return Promise.all(pizzaCatalogsWithProducts);
+  }
+
+  async getAllProducts(catalogId: string) {
+    const productEntity = new ProductEntity();
+    const products = await productEntity.findAll();
+    const categories = await categoryEntity.findAll();
+    const sizes = await sizeEntity.findAll();
+
+    const catalog = (await pizzaCatalogEntity.findOne([
+      {
+        field: "type",
+        op: "==",
+        value: "pizza",
+      },
+    ])) as PizzaCatalog;
+
+    if (!catalog) {
+      return [];
+    }
+
+    if (!catalog.items) {
+      return [];
+    }
+
+    let pizzaCatalog: PizzaCatalogItem[] = [];
+
+    console.log(catalog.items);
+
+    pizzaCatalog = catalog.items.map((item) => {
+      return {
+        ...item.product,
+        product: {
+          ...products.find((p) => p.id === item.product.id),
+          sizes: item.product.sizes.map((s) => {
+            return {
+              ...s,
+              ...sizes.find((size) => size.id === s.id),
+              toppings: s.toppings.map((topping) => {
+                return {
+                  ...topping,
+                  ...products.find((p) => p.id === topping.id),
+                  category: {
+                    ...(categories.find(
+                      (c) => c.id === topping.id
+                    ) as CategoryMenu),
+                  },
+                };
+              }),
+            };
+          }),
+        },
+      };
+    });
+
+    return pizzaCatalog;
   }
 
   async bindSizeToProductCatalog(
@@ -129,6 +195,8 @@ class PizzaCatalogEntity extends CatalogEntity {
 
       pizzaCatalogItems.push(newPizzaCatalogItem);
 
+      console.log(pizzaCatalogItems);
+
       return await this.update(catalogId, {
         items: pizzaCatalogItems,
       });
@@ -152,7 +220,9 @@ class PizzaCatalogEntity extends CatalogEntity {
 
         const newTopping: PizzaToppingCatalog = {
           id: toppingCatalog.id,
-          categoryId: toppingCatalog.categoryId,
+          category: {
+            id: toppingCatalog.category.id,
+          },
           unitPrice: toppingCatalog.unitPrice,
           unitPromotionalPrice: toppingCatalog.unitPromotionalPrice,
         };

@@ -1,4 +1,4 @@
-import { ChevronsUpDown } from "lucide-react"
+import { ChevronsUpDown, PlusCircle } from "lucide-react"
 import { useState } from "react"
 import { Button } from "~/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible"
@@ -30,7 +30,7 @@ export default function Folder({ title, children, onClick }: FolderProps) {
                 </h4>
                 <CollapsibleTrigger asChild>
                     <Button variant="ghost" size="sm" className="w-9 p-0" {...buttonProps} >
-                        <ChevronsUpDown className="h-4 w-4" />
+                        <PlusCircle className="h-4 w-4" />
                         <span className="sr-only">Toggle</span>
                     </Button>
                 </CollapsibleTrigger>

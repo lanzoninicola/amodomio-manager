@@ -1,83 +1,89 @@
-import type { V2_MetaFunction } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
-import { ItalianFlagSmall, LogoOutlineWords } from "~/components/primitives/logo/logo";
+import { type V2_MetaFunction } from "@remix-run/node";
+import { Link } from "@remix-run/react";
+import { ArrowRight } from "lucide-react";
+import React from "react";
+import Container from "~/components/layout/container/container";
+import { LogoTransparent } from "~/components/primitives/logo/logo";
+
 import SplashScreen from "~/components/primitives/splash-screen/splash-screen";
-import { categoryEntity } from "~/domain/category/category.entity.server";
-import type { PizzaCatalog } from "~/domain/pizza-catalog/pizza-catalog.entity.server";
-import { pizzaCatalogEntity } from "~/domain/pizza-catalog/pizza-catalog.entity.server";
-import { ProductEntity } from "~/domain/product/product.entity";
-import { sizeEntity } from "~/domain/size/size.entity.server";
-import { ok } from "~/utils/http-response.server";
+import { cn } from "~/lib/utils";
 
 export const meta: V2_MetaFunction = () => {
-  return [
-    { title: "Cardápio A Modio Mio" },
-    {
-      name: "description",
-      content: "Bem vindo ao cardápio da Pizza Delivery A Modo Mio",
-    },
-  ];
+    return [
+        { title: "Cardápio A Modio Mio" },
+        {
+            name: "description",
+            content: "Bem vindo ao cardápio da Pizza Delivery A Modo Mio",
+        },
+    ];
 };
 
-export async function loader() {
-  const productEntity = new ProductEntity();
-  const product = await productEntity.findAll();
-  const categories = await categoryEntity.findAll();
-  const sizes = await sizeEntity.findAll();
 
-  const pizzaRawCatalog = (await pizzaCatalogEntity.findOne([
-    {
-      field: "type",
-      op: "==",
-      value: "pizza",
-    },
-  ])) as PizzaCatalog;
-
-  let pizzaCatalog: any = [];
-
-  if (pizzaRawCatalog && pizzaRawCatalog.items) {
-    pizzaCatalog = pizzaRawCatalog.items.map((item) => {
-      return {
-        ...item.product,
-        product: {
-          ...product.find((p) => p.id === item.product.id),
-          sizes: item.product.sizes.map((s) => {
-            return {
-              ...s,
-              ...sizes.find((size) => size.id === s.id),
-              pizzas: s.toppings.map((topping) => {
-                return {
-                  ...topping,
-                  topping: {
-                    ...product.find((p) => p.id === topping.id),
-                  },
-                  category: {
-                    ...categories.find((c) => c.id === topping.categoryId),
-                  },
-                };
-              }),
-            };
-          }),
-        },
-      };
-    });
-  }
-
-  return ok({
-    product,
-    categories,
-    sizes,
-    pizzaCatalog,
-  });
-}
 
 export default function HomePage() {
-  const loaderData = useLoaderData<typeof loader>();
-  const pizzaCatalog = loaderData.payload.pizzaCatalog;
 
-  // console.log(pizzaCatalog);
+    return (
+        <div className="relative h-screen bg-brand-orange z-0  overflow-hidden">
+            <DecorativePizzaDeliverySentence />
+            <div className="py-6 hidden md:visible">
+                <LogoTransparent />
+            </div>
+            <BgImage />
+            <div className="absolute w-full h-full grid place-items-center z-30">
+                <LinkHomeButton />
+            </div>
+            <DecorativeAModoMioSentence />
 
-  return (
-    <SplashScreen />
-  );
+        </div >
+    )
+}
+
+function BgImage() {
+    return (
+        <img src="/images/pizza-burrata-bg.png" alt="Pizza burrata" className="z-20 absolute md:left-1/4 md:-top-40 md:w-auto md:h-auto w-[190%] max-w-none -left-24 top-12" />
+    )
+}
+
+function LinkHomeButton() {
+    return (
+        <Link to="/cardapio">
+            <div className="bg-brand-cloud px-8 py-2 rounded-md max-w-max">
+                <div className="flex justify-center items-center gap-4 md:gap-8">
+                    <LogoTransparent />
+                    <span className="font-accent uppercase">cardápio</span>
+                    <ArrowRight size={24} />
+                </div>
+            </div>
+        </Link>
+    )
+}
+
+function DecorativePizzaDeliverySentence() {
+    return (
+        <div className="relative ">
+            <div className="absolute left-0  top-8 whitespace-nowrap">
+                {Array.from({ length: 20 }).map((_, i) => <span key={i} className="font-accent text-sm md:hidden text-center uppercase">pizza delivery </span>)}
+            </div>
+        </div>
+    )
+}
+
+function DecorativeAModoMioSentence() {
+    return (
+        <div className="relative ">
+            <div className="absolute left-12 md:left-60 top-0 origin-top-left rotate-90 whitespace-nowrap bg-brand-orange">
+                {Array.from({ length: 20 }).map((_, i) => <span key={i} className="font-logo text-lg md:text-3xl text-center">a modo mio</span>)}
+            </div>
+        </div>
+    )
+}
+
+function Heading() {
+    return (
+        <div className="flex flex-col gap-4">
+            <h1 className="font-accent uppercase text-3xl md:text-5xl text-center">a pizza</h1>
+            <h1 className="font-logo text-5xl md:text-7xl text-center">a modo mio</h1>
+            <h2 className="font-accent uppercase text-md md:text-xl text-center">não é a pizza<br /> comum</h2>
+        </div>
+    )
 }

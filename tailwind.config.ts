@@ -42,6 +42,21 @@ module.exports = {
         "brand-green": {
           DEFAULT: "var(--brand-green)",
         },
+        "brand-military": {
+          DEFAULT: "var(--brand-military)",
+        },
+        "brand-green-accent": {
+          DEFAULT: "var(--brand-green-accent)",
+        },
+        "brand-yellow": {
+          DEFAULT: "var(--brand-yellow)",
+        },
+        "brand-orange": {
+          DEFAULT: "var(--brand-orange)",
+        },
+        "brand-cloud": {
+          DEFAULT: "var(--brand-cloud)",
+        },
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
@@ -59,6 +74,7 @@ module.exports = {
       fontFamily: {
         sans: ["var(--font-sans)", ...fontFamily.sans],
         logo: ["var(--font-logo)", ...fontFamily.sans],
+        accent: ["var(--font-accent)", ...fontFamily.sans],
       },
       keyframes: {
         "accordion-down": {
