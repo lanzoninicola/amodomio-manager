@@ -6,6 +6,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  orderBy,
   query,
   updateDoc,
   where,
@@ -321,5 +322,24 @@ export class FirestoreModel<T> {
     });
 
     return result as T[];
+  }
+
+  async getLatest(): Promise<T> {
+    let result: FirestoreDocument[] = [];
+
+    const querySnapshot = await getDocs(
+      query(
+        collection(this._client.connection, this._collectionName),
+        orderBy("createdAt", "desc")
+      )
+    );
+
+    querySnapshot.forEach((doc) => {
+      const data = { ...doc.data(), id: doc.id };
+
+      result.push(data);
+    });
+
+    return result[0] as T;
   }
 }

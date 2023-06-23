@@ -1,13 +1,18 @@
-import type { ActionArgs, LoaderArgs } from "@remix-run/node";
-import { type V2_MetaFunction } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
+import type { ActionArgs, LinksFunction, LoaderArgs } from "@remix-run/node";
+import { redirect, type V2_MetaFunction } from "@remix-run/node";
+import { useLoaderData, useNavigate, useSearchParams } from "@remix-run/react";
 
 import { ItalianFlagSmall, LogoTransparent } from "~/components/primitives/logo/logo";
-import { Button } from "~/components/ui/button";
 import { ok } from "~/utils/http-response.server";
-import menu from "../content/cardapio.json"
+import { menuEntity } from "~/domain/menu-item/menu-item.entity.server";
+import type { MenuItem } from "~/domain/menu-item/menu-item.model.server";
+import { useEffect, useState } from "react";
+import { categoryEntity } from "~/domain/category/category.entity.server";
+import type { Category } from "~/domain/category/category.model.server";
+import { CategoriesTabs } from "~/domain/category/components";
+import { urlAt } from "~/utils/url";
+import toLowerCase from "~/utils/to-lower-case";
 import Container from "~/components/layout/container/container";
-import { PizzaIcon } from "~/components/primitives/icons/icons";
 
 export const meta: V2_MetaFunction = () => {
   return [
@@ -19,21 +24,25 @@ export const meta: V2_MetaFunction = () => {
   ];
 };
 
-interface Pizza {
-  id: string
-  name: string
-  ingredients: string[]
-  ingredients_ita: string[]
-  description: string
-  price: string
-
-}
-
-type Menu = Pizza[]
+export const links: LinksFunction = () => [
+  { rel: "preconnect", href: "https://fonts.googleapis.com" },
+  {
+    rel: "preconnect",
+    href: "https://fonts.gstatic.com",
+  },
+  {
+    href: "https://fonts.googleapis.com/css2?family=BioRhyme+Expanded:wght@700&family=Inconsolata:wght@400;700&display=swap",
+    rel: "stylesheet",
+  },
+];
 
 export async function loader({ request }: LoaderArgs) {
+  const menuItems = await menuEntity.findAll() as MenuItem[]
+  const categories = await categoryEntity.findAll()
+
   return ok({
-    menu
+    items: menuItems.filter(item => item.visible).map(item => item as MenuItem),
+    categories: categories.filter(c => c.visible).map(c => c)
   })
 }
 
@@ -41,43 +50,103 @@ export async function action({ request }: ActionArgs) {
   return null
 }
 
-export default function HomePage() {
+export default function MenuPage() {
   const loaderData = useLoaderData<typeof loader>()
+  const items = loaderData.payload.items as MenuItem[]
+  const categories = loaderData.payload.categories as Category[]
+
+  const [searchParams, setSearchParams] = useSearchParams()
+  const currentCategoryTab = searchParams.get("tab")
+
+  const itemsFiltered = items.filter(item => {
+
+    if (!currentCategoryTab) {
+      const classicCategory = categories.find(c => toLowerCase(c.name) === 'classica')
+      return item.category?.id === classicCategory?.id
+    }
+
+    if (currentCategoryTab) {
+      return item.category?.id === currentCategoryTab
+    }
+    return true
+  })
 
   return (
-
     <div className="md:h-screen bg-brand-yellow flex flex-col">
-      <div className="py-6 md:py-12 flex justify-center">
-        <LogoTransparent />
-      </div>
-      <div className="p-4 md:p-0">
-        <Content />
-      </div>
+      <Container clazzName="z-20">
+        <div className="py-6 md:py-12 flex justify-center mb-6 ">
+          <LogoWithEasternEgg />
+        </div>
+        <div className="sticky w-full top-2">
+          <CategoriesTabs
+            categories={categories}
+            includeAll={false}
+            bgStyle="bg-brand-orange"
+            activeTabStyle="font-menu font-bold bg-brand-yellow text-black text-lg"
+            inactiveTabStyle="font-menu font-bold text-white text-lg" />
+        </div>
+        <div className="p-4 md:p-0 overflow-hidden">
+          <Content items={itemsFiltered} />
+        </div>
+      </Container>
+      <img src="/images/pizza-linguiça.png" alt="Pizza linguiça decorativa"
+        className="fixed top-32 md:top-0 -right-96 -rotate-90 opacity-20 grayscale contrast-100 w-[190%] md:w-auto max-w-none"
+      />
     </div >
   );
 }
 
+function LogoWithEasternEgg() {
+  const navigate = useNavigate()
+  const [clickedAmount, setClickedAmount] = useState(0)
 
-function Content() {
-  const loaderData = useLoaderData<typeof loader>()
-  const menu = loaderData.payload.menu as Menu
+  console.log('clickedAmount', clickedAmount)
+
+  const handleClick = () => {
+    setClickedAmount(clickedAmount + 1)
+  }
+
+  const isClickedEnough = clickedAmount > 3
+
+
+  useEffect(() => {
+    if (isClickedEnough) {
+      navigate('/admin')
+
+    }
+  }, [isClickedEnough, navigate])
+
+
+  return (
+    <div onClick={handleClick} >
+      <LogoTransparent />
+    </div>
+  )
+}
+
+
+
+
+function Content({ items }: { items: MenuItem[] }) {
+
 
   return (
     <div className="md:grid md:grid-cols-[1fr_.5fr]">
+
       <div className="md:pl-40 md:pt-12">
         <ul className="flex flex-col gap-4 md:grid md:grid-cols-2 md:gap-x-12 mb-4">
-          {menu.map((item) => {
+          {items.map((item, idx) => {
 
-            const ingredientsString = item.ingredients.join(', ')
+            const ingredientsString = item.ingredients && item.ingredients.join(', ')
 
             return (
-              <li key={item.id} className="mb-2">
+              <li key={idx} className="mb-2">
 
                 <div className="flex- flex-col">
                   <PizzaTitle>{item.name}</PizzaTitle>
                   {item.description && <p>{item.description}</p>}
-                  <p className="text-sm md:text-lg font-semibold">{ingredientsString}</p>
-                  <ItalianIngredientList ingredients={item.ingredients_ita} />
+                  <p className="text-lg font-semibold font-menu leading-tight">{ingredientsString}</p>
+                  <ItalianIngredientList ingredients={item?.ingredientsIta || []} />
                   <p>{item.description}</p>
                   <Price>{item.price}</Price>
                 </div>
@@ -87,12 +156,11 @@ function Content() {
           })}
         </ul>
       </div>
-      <img src="/images/pizza-linguiça.png" alt="Pizza linguiça decorativa"
-        className="fixed top-32 md:top-0 -right-96 -rotate-90 opacity-20 grayscale contrast-100 w-[190%] md:w-auto max-w-none"
-      />
+
     </div>
   )
 }
+
 
 interface PizzaTitleProps {
   children: React.ReactNode
@@ -101,9 +169,9 @@ interface PizzaTitleProps {
 function PizzaTitle({ children }: PizzaTitleProps) {
 
   return (
-    <div className="flex gap-2 mb-2 md:mb-0">
-      <PizzaIcon />
-      <h3 className="text-xs md:text-lg font-bold font-accent uppercase">{children}</h3>
+    <div className="flex gap-1 mb-1 md:mb-0 items-center tracking-tight">
+      {/* <PizzaIcon /> */}
+      <span className="text-base font-bold font-accent uppercase">{children}</span>
     </div>
   )
 }
@@ -118,8 +186,10 @@ function ItalianIngredientList({ ingredients }: ItalianIngredientListProps) {
 
   return (
     <div className="flex gap-1 items-center">
-      <ItalianFlagSmall className="w-[17px] h-[12px]" />
-      <p className="text-sm md:text-base font-light">{ingredientsString}</p>
+      <div className="relative">
+        <ItalianFlagSmall className="absolute top-2 left-0 w-[17px] h-[12px]" />
+        <span className="ml-6 text-base font-light font-menu">{ingredientsString}</span>
+      </div>
     </div>
   )
 
@@ -133,7 +203,10 @@ interface PriceProps {
 function Price({ children }: PriceProps) {
 
   return (
-    <span className="text-xs font-semibold text-black">{children}</span>
+    <div className="flex gap-1 mt-2">
+      <span className="text-xs font-semibold text-black">R$</span>
+      <span className="text-xs font-semibold text-black">{children}</span>
+    </div>
   )
 
 }

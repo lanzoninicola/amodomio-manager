@@ -15,19 +15,15 @@ import { Toaster } from "./components/ui/toaster";
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
   { rel: "stylesheet", href: stylesheet },
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
-  {
-    rel: "preconnect",
-    href: "https://fonts.gstatic.com",
-  },
-  {
-    href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Homemade+Apple&family=BioRhyme+Expanded:wght@700&display=swap",
-    rel: "stylesheet",
-  },
+  // { rel: "preconnect", href: "https://fonts.googleapis.com" },
   // {
-  //   href: "https://fonts.googleapis.com/css2?family=BioRhyme+Expanded:wght@700&display=swap",
+  //   rel: "preconnect",
+  //   href: "https://fonts.gstatic.com",
+  // },
+  // {
+  //   href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Homemade+Apple&family=BioRhyme+Expanded:wght@700&display=swap",
   //   rel: "stylesheet",
-  // }
+  // },
 ];
 
 export default function App() {
