@@ -18,7 +18,6 @@ import type { MenuItem } from "~/domain/menu-item/menu-item.model.server";
 import { menuEntity } from "~/domain/menu-item/menu-item.entity.server";
 import { badRequest, ok } from "~/utils/http-response.server";
 import SortingOrderItems from "~/components/primitives/sorting-order-items/sorting-order-items";
-import Tabs from "~/components/primitives/tabs/tabs";
 import sort from "~/utils/sort";
 import { urlAt } from "~/utils/url";
 import { Separator } from "~/components/ui/separator";
