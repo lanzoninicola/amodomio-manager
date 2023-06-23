@@ -53,8 +53,6 @@ class MenuItemEntity extends BaseEntity<MenuItem> {
 
     const currentCategorySortOrder = currentCategory?.sortOrder || 1000;
 
-    console.log({ current, currentCategory });
-
     if (!current) {
       badRequest("Item não encontrado");
     }

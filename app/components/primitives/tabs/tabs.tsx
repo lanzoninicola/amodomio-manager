@@ -8,20 +8,26 @@ export interface TabItem {
     disabled?: boolean
 }
 
-interface TabsProps {
+export interface TabsProps {
     tabs: TabItem[]
+    bgStyle?: string
+    activeTabStyle?: string
+    inactiveTabStyle?: string
+    clazzName?: HTMLDivElement["className"]
 }
 
 
-export default function Tabs({ tabs }: TabsProps) {
+export default function Tabs({ tabs, bgStyle, activeTabStyle, inactiveTabStyle, clazzName }: TabsProps) {
     const [searchParams, setSearchParams] = useSearchParams()
     let currentActiveTab = searchParams.get("tab")
 
-    const activeTabStyle = "bg-primary text-white rounded-md py-1"
+    let baseActiveTabStyle = "rounded-md py-1"
+    activeTabStyle = activeTabStyle ? `${baseActiveTabStyle} ${activeTabStyle}` : `${baseActiveTabStyle} bg-primary text-white`
+    const backgroundStyle = bgStyle ? bgStyle : "bg-muted"
 
 
     return (
-        <div className="flex flex-wrap min-w-fit items-center p-1 rounded-md bg-muted text-muted-foreground mb-6">
+        <div className={`relative flex flex-wrap justify-center min-w-fit items-center p-1 rounded-md text-muted-foreground mb-6 ${backgroundStyle} ${clazzName}`}>
 
             {tabs.map((tab, idx) => {
 
@@ -32,7 +38,7 @@ export default function Tabs({ tabs }: TabsProps) {
                 }
 
                 const children = (
-                    <div className={`${currentActiveTab === tab.id && activeTabStyle} m-1`}>
+                    <div className={`${currentActiveTab === tab.id ? activeTabStyle : inactiveTabStyle} m-1`}>
                         <span>{tab.name}</span>
                     </div>
                 )

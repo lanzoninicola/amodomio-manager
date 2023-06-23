@@ -20,6 +20,9 @@ import { badRequest, ok } from "~/utils/http-response.server";
 import SortingOrderItems from "~/components/primitives/sorting-order-items/sorting-order-items";
 import Tabs from "~/components/primitives/tabs/tabs";
 import sort from "~/utils/sort";
+import { urlAt } from "~/utils/url";
+import { Separator } from "~/components/ui/separator";
+import { CategoriesTabs } from "~/domain/category/components";
 
 export const meta: V2_MetaFunction = () => {
     return [
@@ -39,8 +42,10 @@ type MenuWithCreateDate = MenuItem & { createdAt: string }
 export async function loader({ request }: LoaderArgs) {
     const url = new URL(request.url)
     const tab = url.searchParams.get('tab')
+    const lastUrlSlug = urlAt(request.url, -1)
 
-    if (!tab) {
+
+    if (!tab && lastUrlSlug === "admin") {
         return redirect('/admin?tab=all')
     }
 
@@ -66,7 +71,7 @@ export async function action({ request }: LoaderArgs) {
 
         const itemCreated = await menuEntity.create(menuItem)
 
-        return redirect(`/admin?_action=menu-item-create&id=${itemCreated.id}`)
+        return redirect(`/admin?_action=menu-item-edit&id=${itemCreated.id}`)
     }
 
     if (_action === "menu-item-edit") {
@@ -116,7 +121,7 @@ export async function action({ request }: LoaderArgs) {
 
     if (_action === "menu-item-delete") {
         await menuEntity.delete(values.id as string)
-        return redirect(`/admin`)
+        return redirect(`/admin?tab=all`)
     }
 
     if (_action === "item-sortorder-up") {
@@ -154,18 +159,7 @@ export default function AdminCardapio() {
         return true
     })
 
-    // const itemsFilteredSorted = itemsFiltered.sort((a, b) => {
-    //     if ((a.sortOrder || 0) > (b.sortOrder || 0)) {
-    //         return 1
-    //     }
-    //     if ((a.sortOrder || 0) < (b.sortOrder || 0)) {
-    //         return -1
-    //     }
-    //     return 0
-    // })
-
     const itemsFilteredSorted = sort(itemsFiltered, "sortOrder", "asc")
-
 
 
     return (
@@ -305,47 +299,45 @@ function MenuItemList({ items, action }: MenuItemListProps) {
     if (action === "menu-item-edit" || action === "menu-item-create") return null
 
     return (
-        <ul>
-            {
-                (!items || items.length === 0) ?
-                    <NoRecordsFound text="Nenhum itens no menu" />
-                    :
-                    items.map(item => {
-                        return (
-                            <li key={item.id} className="mb-4">
-                                <MenuItemCard item={item} />
-                            </li>
-                        )
-                    })
-            }
-        </ul>
+        <div className="flex flex-col gap-4">
+            <MenuItemListStat items={items} />
+            <ul>
+                {
+                    (!items || items.length === 0) ?
+                        <NoRecordsFound text="Nenhum itens no menu" />
+                        :
+                        items.map(item => {
+                            return (
+                                <li key={item.id} className="mb-4">
+                                    <MenuItemCard item={item} />
+                                </li>
+                            )
+                        })
+                }
+            </ul>
+        </div>
+    )
+}
+
+function MenuItemListStat({ items }: { items: MenuItem[] }) {
+
+    return (
+        <div className="flex flex-col gap-2">
+            <div className="grid grid-cols-2">
+                <div className="text-sm font-semibold text-muted-foreground">Totais pizzas</div>
+                <div className="text-sm font-semibold">{items.length}</div>
+            </div>
+            <div className="grid grid-cols-2">
+                <div className="text-sm font-semibold text-muted-foreground">Pizzas publicadas</div>
+                <div className="text-sm font-semibold">{items.filter(i => i.visible === true).length}</div>
+            </div>
+            <Separator />
+        </div>
     )
 }
 
 
-function CategoriesTabs({ categories }: { categories: Category[] }) {
-    const categoryTabs = categories.map(category => (
-        {
-            id: category.id ?? "",
-            name: category.name,
-            linkTo: `/admin?tab=${category.name}&categoryId=${category.id}`,
-            default: category.name === "Classica"
-        }
-    ))
 
-
-    const tabs = [
-        {
-            id: "all",
-            name: "Todas",
-            linkTo: "/admin",
-            default: true
-        },
-        ...categoryTabs
-    ]
-
-    return <Tabs tabs={tabs} />
-}
 
 
 
