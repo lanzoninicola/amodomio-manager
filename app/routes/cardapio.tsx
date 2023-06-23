@@ -72,27 +72,35 @@ export default function MenuPage() {
   })
 
   return (
-    <div className="md:h-screen bg-brand-yellow flex flex-col">
-      <Container clazzName="z-20">
-        <div className="py-6 md:py-12 flex justify-center mb-6 ">
-          <LogoWithEasternEgg />
-        </div>
-        <div className="sticky w-full top-2">
-          <CategoriesTabs
-            categories={categories}
-            includeAll={false}
-            bgStyle="bg-brand-orange"
-            activeTabStyle="font-menu font-bold bg-brand-yellow text-black text-lg"
-            inactiveTabStyle="font-menu font-bold text-white text-lg" />
-        </div>
-        <div className="p-4 md:p-0 overflow-hidden">
-          <Content items={itemsFiltered} />
-        </div>
-      </Container>
-      <img src="/images/pizza-linguiça.png" alt="Pizza linguiça decorativa"
-        className="fixed top-32 md:top-0 -right-96 -rotate-90 opacity-20 grayscale contrast-100 w-[190%] md:w-auto max-w-none"
-      />
-    </div >
+    <>
+      <div className="w-screen h-300px z-50">
+        <pre className="text-sm">
+          {JSON.stringify(loaderData, null, 2)}
+        </pre>
+      </div>
+
+      <div className="md:h-screen bg-brand-yellow flex flex-col">
+        <Container clazzName="z-20">
+          <div className="py-6 md:py-12 flex justify-center mb-6 ">
+            <LogoWithEasternEgg />
+          </div>
+          <div className="sticky w-full top-2">
+            <CategoriesTabs
+              categories={categories}
+              includeAll={false}
+              bgStyle="bg-brand-orange"
+              activeTabStyle="font-menu font-bold bg-brand-yellow text-black text-lg"
+              inactiveTabStyle="font-menu font-bold text-white text-lg" />
+          </div>
+          <div className="p-4 md:p-0 overflow-hidden">
+            <Content items={itemsFiltered} />
+          </div>
+        </Container>
+        <img src="/images/pizza-linguiça.png" alt="Pizza linguiça decorativa"
+          className="fixed top-32 md:top-0 -right-96 -rotate-90 opacity-20 grayscale contrast-100 w-[190%] md:w-auto max-w-none"
+        />
+      </div >
+    </>
   );
 }
 
