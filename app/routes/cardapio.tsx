@@ -77,16 +77,18 @@ export default function MenuPage() {
         <div className="py-6 md:py-12 flex justify-center mb-6 ">
           <LogoWithEasternEgg />
         </div>
-        <div className="sticky w-full top-2">
-          <CategoriesTabs
-            categories={categories}
-            includeAll={false}
-            bgStyle="bg-brand-orange"
-            activeTabStyle="font-menu font-bold bg-brand-yellow text-black text-lg"
-            inactiveTabStyle="font-menu font-bold text-white text-lg" />
-        </div>
-        <div className="p-4 md:p-0 overflow-hidden">
-          <Content items={itemsFiltered} />
+        <div>
+          <div className="sticky w-full top-2 z-20">
+            <CategoriesTabs
+              categories={categories}
+              includeAll={false}
+              bgStyle="bg-brand-orange"
+              activeTabStyle="font-menu font-bold bg-brand-yellow text-black text-lg"
+              inactiveTabStyle="font-menu font-bold text-white text-lg" />
+          </div>
+          <div className="p-4 md:p-0 overflow-hidden">
+            <Content items={itemsFiltered} />
+          </div>
         </div>
       </Container>
       <img src="/images/pizza-linguiça.png" alt="Pizza linguiça decorativa"
@@ -124,8 +126,6 @@ function LogoWithEasternEgg() {
     </div>
   )
 }
-
-
 
 
 function Content({ items }: { items: MenuItem[] }) {
