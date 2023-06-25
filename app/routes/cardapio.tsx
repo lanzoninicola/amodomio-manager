@@ -102,6 +102,7 @@ export default function MenuPage() {
 function LogoWithEasternEgg() {
   const navigate = useNavigate()
   const [clickedAmount, setClickedAmount] = useState(0)
+  const [showRedirect, setShowRedirect] = useState(false)
 
   console.log('clickedAmount', clickedAmount)
 
@@ -113,12 +114,30 @@ function LogoWithEasternEgg() {
 
 
   useEffect(() => {
+    let timeout: NodeJS.Timeout
+
     if (isClickedEnough) {
-      navigate('/admin')
+      setShowRedirect(true)
+
+      timeout = setTimeout(() => {
+        navigate('/admin')
+      }, 1500)
+
+      return () => {
+        clearTimeout(timeout)
+      }
 
     }
   }, [isClickedEnough, navigate])
 
+  if (showRedirect) {
+
+    return (
+      <div className="grid place-items-center">
+        <span className="font-semibold text-sm">Aguarde...</span>
+      </div>
+    )
+  }
 
   return (
     <div onClick={handleClick} >
