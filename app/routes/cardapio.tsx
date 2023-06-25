@@ -13,6 +13,7 @@ import { CategoriesTabs } from "~/domain/category/components";
 import { urlAt } from "~/utils/url";
 import toLowerCase from "~/utils/to-lower-case";
 import Container from "~/components/layout/container/container";
+import EasterEgg from "~/components/primitives/easter-egg/ester-egg";
 
 export const meta: V2_MetaFunction = () => {
   return [
@@ -75,7 +76,9 @@ export default function MenuPage() {
     <div className="md:h-screen bg-brand-yellow flex flex-col">
       <Container clazzName="z-20">
         <div className="py-6 md:py-12 flex justify-center mb-6 ">
-          <LogoWithEasternEgg />
+          <EasterEgg redirectTo="/admin">
+            <LogoTransparent />
+          </EasterEgg>
         </div>
         <div>
           <div className="sticky w-full top-2 z-20">
@@ -99,57 +102,8 @@ export default function MenuPage() {
   );
 }
 
-function LogoWithEasternEgg() {
-  const navigate = useNavigate()
-  const [clickedAmount, setClickedAmount] = useState(0)
-  const [showRedirect, setShowRedirect] = useState(false)
-
-  console.log('clickedAmount', clickedAmount)
-
-  const handleClick = () => {
-    setClickedAmount(clickedAmount + 1)
-  }
-
-  const isClickedEnough = clickedAmount > 3
-
-
-  useEffect(() => {
-    let timeout: NodeJS.Timeout
-
-    if (isClickedEnough) {
-      setShowRedirect(true)
-
-      timeout = setTimeout(() => {
-        navigate('/admin')
-      }, 1500)
-
-      return () => {
-        clearTimeout(timeout)
-      }
-
-    }
-  }, [isClickedEnough, navigate])
-
-  if (showRedirect) {
-
-    return (
-      <div className="grid place-items-center">
-        <span className="font-semibold text-sm">Aguarde...</span>
-      </div>
-    )
-  }
-
-  return (
-    <div onClick={handleClick} >
-      <LogoTransparent />
-    </div>
-  )
-}
-
 
 function Content({ items }: { items: MenuItem[] }) {
-
-
   return (
     <div className="md:grid md:grid-cols-[1fr_.5fr]">
 
