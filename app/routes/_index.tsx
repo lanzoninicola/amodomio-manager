@@ -35,16 +35,14 @@ export default function HomePage() {
 
     return (
         <>
-            <div className="relative h-screen bg-brand-orange z-0  overflow-hidden">
+            <div className="relative h-screen bg-brand-orange z-0 overflow-hidden">
                 <BgImage />
-                <div className="flex items-end h-full z-10 ">
-                    <div className="flex flex-col justify-center items-center gap-4">
-                        <LogoTransparent />
-                        <div className="flex flex-col p-6">
-                            <Heading />
-                            <div className="flex justify-center">
-                                <LinkCardapio />
-                            </div>
+                <div className="flex flex-col justify-end items-center gap-4 h-full">
+                    <LogoTransparent />
+                    <div className="flex flex-col p-6">
+                        <Heading />
+                        <div className="flex justify-center">
+                            <LinkCardapio />
                         </div>
                     </div>
                 </div>
