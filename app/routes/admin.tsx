@@ -23,8 +23,10 @@ export default function AdminOutlet() {
             <div className="fixed h-auto w-full bg-muted z-50">
                 <NavMenuCollapsible navItems={
                     [
-                        { label: "Cardápio", to: "/admin" },
+                        { label: "Gerençiar cardápio", to: "/admin" },
                         { label: "Categorias", to: "/admin/categorias" },
+                        { label: "Opções", to: "/admin/options" },
+                        { label: "Voltar para o cardápio", to: "/cardapio" }
                     ]
                 } />
             </div>

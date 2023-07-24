@@ -6,6 +6,7 @@ interface Category {
   type: "topping" | "menu";
   sortOrder?: number;
   visible: boolean;
+  default?: boolean;
 }
 
 interface CategoryMenu extends Category {

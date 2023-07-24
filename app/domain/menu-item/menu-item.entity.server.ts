@@ -2,21 +2,30 @@ import { badRequest } from "~/utils/http-response.server";
 import { BaseEntity } from "../base.entity";
 import { MenuItemModel, type MenuItem } from "./menu-item.model.server";
 import { CategoryModel } from "../category/category.model.server";
+import { categoryEntity } from "../category/category.entity.server";
 
 class MenuItemEntity extends BaseEntity<MenuItem> {
-  //   override async create(menuItem: MenuItem): Promise<MenuItem> {
-  //     this.validate(menuItem);
+  override async create(menuItem: MenuItem): Promise<MenuItem> {
+    this.validate(menuItem);
 
-  //     const latest = await this.getLatest();
+    if (!menuItem.category) {
+      badRequest("Categoria não informada");
+    }
 
-  //     if (latest) {
-  //       menuItem.sortOrder = (latest?.sortOrder || 0) + 1;
-  //     } else {
-  //       menuItem.sortOrder = 1;
-  //     }
+    const defaultCategory = await categoryEntity.getDefaultCategory("menu");
 
-  //     return await super.save(menuItem);
-  //   }
+    const latest = await this.getLatestByCategory(
+      defaultCategory!.id as string
+    );
+
+    if (latest) {
+      menuItem.sortOrder = (latest?.sortOrder || 0) + 1;
+    } else {
+      menuItem.sortOrder = 1;
+    }
+
+    return await super.save(menuItem);
+  }
 
   async resetSortOrder(): Promise<void> {
     const all = await MenuItemModel.whereCompound([
@@ -163,6 +172,27 @@ class MenuItemEntity extends BaseEntity<MenuItem> {
     });
 
     return current!;
+  }
+
+  async getLatestByCategory(categoryId: string): Promise<MenuItem | null> {
+    const items = await MenuItemModel.whereCompound([
+      {
+        field: "category.id",
+        op: "==",
+        value: categoryId,
+      },
+      {
+        field: "visible",
+        op: "==",
+        value: true,
+      },
+    ]);
+
+    if (items.length === 0) {
+      return null;
+    }
+
+    return items[items.length - 1];
   }
 }
 

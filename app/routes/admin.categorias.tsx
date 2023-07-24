@@ -44,7 +44,8 @@ export async function action({ request }: LoaderArgs) {
             name: values.name as string || "",
             type: "menu",
             visible: values.visible === "on" ? true : false,
-            sortOrder: values?.sortOrder ? parseInt(values.sortOrder as string) : 0
+            sortOrder: values?.sortOrder ? parseInt(values.sortOrder as string) : 0,
+            default: values.default === "on" ? true : false
         }
 
         const itemCreated = await categoryEntity.create(category)
@@ -58,7 +59,8 @@ export async function action({ request }: LoaderArgs) {
             id: values.id as string,
             name: values.name as string,
             type: "menu",
-            visible: values.visible === "on" ? true : false
+            visible: values.visible === "on" ? true : false,
+            default: values.default === "on" ? true : false
         }
 
         await categoryEntity.update(values.id as string, category)
@@ -171,6 +173,12 @@ function CategoryForm({ category, action }: CategoryFormProps) {
                     <Label htmlFor="visible" className="flex gap-2 items-center justify-end">
                         Visível
                         <Switch id="visible" name="visible" defaultChecked={category.visible} />
+                    </Label>
+                </Fieldset>
+                <Fieldset>
+                    <Label htmlFor="default" className="flex gap-2 items-center justify-end">
+                        Padrão
+                        <Switch id="default" name="default" defaultChecked={category.default} />
                     </Label>
                 </Fieldset>
                 <div className="flex gap-4">

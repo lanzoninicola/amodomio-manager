@@ -295,8 +295,12 @@ export class FirestoreModel<T> {
    * @param value  - The value to search
    * @returns  - An array of documents
    */
-  async findOne(conditions: whereCompoundConditions): Promise<T> {
+  async findOne(conditions: whereCompoundConditions): Promise<T | null> {
     const result = await this.whereCompound(conditions);
+
+    if (result.length === 0) {
+      return null;
+    }
 
     return result[0] as T;
   }

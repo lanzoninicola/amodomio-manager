@@ -85,6 +85,7 @@ export default function MenuPage() {
             <CategoriesTabs
               categories={categories}
               includeAll={false}
+              includeEmpty={false}
               bgStyle="bg-brand-orange"
               activeTabStyle="font-menu font-bold bg-brand-yellow text-black text-lg"
               inactiveTabStyle="font-menu font-bold text-white text-lg" />

@@ -129,6 +129,23 @@ class CategoryEntity extends BaseEntity<Category> {
     return await CategoryModel.delete(id);
   }
 
+  async getDefaultCategory(type: string): Promise<Category | null> {
+    const defaultCategory = await CategoryModel.findOne([
+      {
+        field: "type",
+        op: "==",
+        value: type,
+      },
+      {
+        field: "default",
+        op: "==",
+        value: true,
+      },
+    ]);
+
+    return defaultCategory;
+  }
+
   validate(category: Category): void {
     if (!category.name) {
       serverError("O nome do catálogo é obrigatório");

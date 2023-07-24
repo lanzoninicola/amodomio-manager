@@ -22,6 +22,7 @@ import sort from "~/utils/sort";
 import { urlAt } from "~/utils/url";
 import { Separator } from "~/components/ui/separator";
 import { CategoriesTabs } from "~/domain/category/components";
+import trim from "~/utils/trim";
 
 export const meta: V2_MetaFunction = () => {
     return [
@@ -39,17 +40,19 @@ export const meta: V2_MetaFunction = () => {
 type MenuWithCreateDate = MenuItem & { createdAt: string }
 
 export async function loader({ request }: LoaderArgs) {
+    const categories = await categoryEntity.findAll()
+
     const url = new URL(request.url)
     const tab = url.searchParams.get('tab')
     const lastUrlSlug = urlAt(request.url, -1)
 
+    const defaultCategory = categories.find(c => c.default === true)
 
     if (!tab && lastUrlSlug === "admin") {
-        return redirect('/admin?tab=all')
+        return redirect(`/admin?tab=${defaultCategory?.id}`)
     }
 
     const items = await menuEntity.findAll() as MenuWithCreateDate[]
-    const categories = await categoryEntity.findAll()
 
     // order by created at
     const sortedItems = sort(items, "createdAt", "desc")
@@ -86,12 +89,15 @@ export async function action({ request }: LoaderArgs) {
             badRequest("Categoria é obrigatória")
         }
 
+
+
         const menuItem: MenuItem = {
             id: values.id as string,
             category: {
                 id: categoryId
             },
-            visible: values.visible === "on" ? true : false
+            visible: values.visible === "on" ? true : false,
+            sortOrder: 9999
 
         }
 
@@ -100,11 +106,11 @@ export async function action({ request }: LoaderArgs) {
         }
 
         if (ingredients !== "") {
-            menuItem.ingredients = ingredients.split(",")
+            menuItem.ingredients = ingredients.split(",").map(i => trim(i))
         }
 
         if (ingredientsIta !== "") {
-            menuItem.ingredientsIta = ingredientsIta.split(",")
+            menuItem.ingredientsIta = ingredientsIta.split(",").map(i => trim(i))
         }
 
         if (price !== "") {
@@ -116,11 +122,12 @@ export async function action({ request }: LoaderArgs) {
         // }
 
         await menuEntity.update(values.id as string, menuItem)
+        return redirect(`/admin?tab=${categoryId}`)
     }
 
     if (_action === "menu-item-delete") {
         await menuEntity.delete(values.id as string)
-        return redirect(`/admin?tab=all`)
+        return redirect(`/admin`)
     }
 
     if (_action === "item-sortorder-up") {
@@ -166,11 +173,15 @@ export default function AdminCardapio() {
             <div className="fixed top-[35px] left-0  w-full p-4 bg-muted z-10" >
                 <div className="flex items-center justify-between mb-4">
                     <h1 className="font-bold text-xl">Cardapio</h1>
-                    <Form method="post">
-                        <SubmitButton actionName="menu-item-create" className="w-max" idleText="Criar item" loadingText="Criando..."
-                            disabled={action === "menu-item-create" || action === "menu-item-edit"}
-                        />
-                    </Form>
+                    {(action !== "menu-item-edit") &&
+                        (
+                            <Form method="post">
+                                <SubmitButton actionName="menu-item-create" className="w-max" idleText="Criar item" loadingText="Criando..."
+                                    disabled={action === "menu-item-create"}
+                                />
+                            </Form>
+                        )
+                    }
                 </div>
                 {currentCategoryTab !== "all" && (
                     <div className="flex gap-2">
@@ -184,10 +195,10 @@ export default function AdminCardapio() {
                         )}
                     </div>
                 )}
-                <MenuItemForm item={itemToEdit} action={action} />
+                <MenuItemForm categoryId={currentCategoryTab || undefined} item={itemToEdit} action={action} />
             </div>
             <div className="mt-40 min-w-[350px]">
-                <CategoriesTabs categories={categories} />
+                <CategoriesTabs categories={categories} includeEmpty={false} />
                 <MenuItemList items={itemsFilteredSorted} action={action} />
             </div>
 
@@ -197,6 +208,7 @@ export default function AdminCardapio() {
 
 
 interface MenuItemFormProps {
+    categoryId?: string
     item: MenuItem
     action: Partial<MenuItemActionSearchParam>
 }
@@ -214,16 +226,22 @@ function MenuItemForm({ item, action }: MenuItemFormProps) {
 
     if (action !== "menu-item-edit" && action !== "menu-item-create") return null
 
+    const navigationBackLink = item.category?.id ? `/admin?tab=${item.category?.id}` : "/admin"
+
     return (
 
         <div className="p-4 rounded-md border-2 border-muted">
             <Form method="post" className="">
-                <div className="flex justify-between">
-                    <div className="flex gap-2 mb-4">
+                <div className="flex justify-between items-center">
+                    <div className="flex gap-2 mb-4 items-center">
                         <span className="text-xs font-semibold">Pizza ID:</span>
                         <span className="text-xs">{item.id}</span>
                     </div>
-                    <Link to="/admin" className="text-xs underline">Voltar</Link>
+                    <Link to={navigationBackLink} className="text-xs underline">
+                        <Button type="button" variant="outline" size="sm" className="border-black">
+                            Voltar
+                        </Button>
+                    </Link>
                 </div>
                 <Fieldset>
                     <InputItem type="hidden" name="id" defaultValue={item.id} />
@@ -370,8 +388,8 @@ function MenuItemCard({ item }: MenuItemCardProps) {
                 <div className="flex flex-col gap-4">
                     <div className="flex justify-between items-center">
                         <h2 className="text-lg font-bold tracking-tight">{pizzaTitle}</h2>
-                        <Link to={`?_action=menu-item-edit&id=${item.id}`} >
-                            <Edit size={24} className="cursor-pointer" />
+                        <Link to={`?_action=menu-item-edit&id=${item.id}&categoryId=${pizzaCategory?.id}`} >
+                            <span className="underline">Editar</span>
                         </Link>
                     </div>
                     <h3 className="flex gap-2">
