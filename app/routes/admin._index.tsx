@@ -23,6 +23,7 @@ import { urlAt } from "~/utils/url";
 import { Separator } from "~/components/ui/separator";
 import { CategoriesTabs } from "~/domain/category/components";
 import trim from "~/utils/trim";
+import { Badge } from "~/components/ui/badge";
 
 export const meta: V2_MetaFunction = () => {
     return [
@@ -46,10 +47,8 @@ export async function loader({ request }: LoaderArgs) {
     const tab = url.searchParams.get('tab')
     const lastUrlSlug = urlAt(request.url, -1)
 
-    const defaultCategory = categories.find(c => c.default === true)
-
     if (!tab && lastUrlSlug === "admin") {
-        return redirect(`/admin?tab=${defaultCategory?.id}`)
+        return redirect(`/admin`)
     }
 
     const items = await menuEntity.findAll() as MenuWithCreateDate[]
@@ -122,7 +121,7 @@ export async function action({ request }: LoaderArgs) {
         // }
 
         await menuEntity.update(values.id as string, menuItem)
-        return redirect(`/admin?tab=${categoryId}`)
+        return redirect(`/admin`)
     }
 
     if (_action === "menu-item-delete") {
@@ -155,17 +154,7 @@ export default function AdminCardapio() {
     const itemId = searchParams.get("id")
     const itemToEdit = items.find(item => item.id === itemId) as MenuItem
 
-
-    const currentCategoryTab = searchParams.get("tab")
-    const itemsFiltered = items.filter(item => {
-        if (currentCategoryTab) {
-            if (currentCategoryTab === "all") return true
-            return item.category?.id === currentCategoryTab
-        }
-        return true
-    })
-
-    const itemsFilteredSorted = sort(itemsFiltered, "sortOrder", "asc")
+    const itemsFilteredSorted = sort(items, "sortOrder", "asc")
 
 
     return (
@@ -183,23 +172,24 @@ export default function AdminCardapio() {
                         )
                     }
                 </div>
-                {currentCategoryTab !== "all" && (
-                    <div className="flex gap-2">
-                        <Link to={`?tab=${currentCategoryTab}&_action=menu-items-sortorder`} className="mr-4">
-                            <span className="text-sm underline">Ordenamento</span>
+
+                <div className="flex gap-2">
+                    <Link to={`?_action=menu-items-sortorder`} className="mr-4">
+                        <span className="text-sm underline">Ordenamento</span>
+                    </Link>
+                    {action === "menu-items-sortorder" && (
+                        <Link to="/admin" className="mr-4">
+                            <span className="text-sm underline">Fechar Ordenamento</span>
                         </Link>
-                        {action === "menu-items-sortorder" && (
-                            <Link to="/admin" className="mr-4">
-                                <span className="text-sm underline">Fechar Ordenamento</span>
-                            </Link>
-                        )}
-                    </div>
-                )}
-                <MenuItemForm categoryId={currentCategoryTab || undefined} item={itemToEdit} action={action} />
+                    )}
+                </div>
+                <MenuItemForm item={itemToEdit} action={action} />
             </div>
             <div className="mt-40 min-w-[350px]">
-                <CategoriesTabs categories={categories} includeEmpty={false} />
-                <MenuItemList items={itemsFilteredSorted} action={action} />
+                <div className="flex flex-col gap-4">
+                    <MenuItemListStat items={itemsFilteredSorted} />
+                    <MenuItemList items={itemsFilteredSorted} action={action} />
+                </div>
             </div>
 
         </Container>
@@ -226,7 +216,7 @@ function MenuItemForm({ item, action }: MenuItemFormProps) {
 
     if (action !== "menu-item-edit" && action !== "menu-item-create") return null
 
-    const navigationBackLink = item.category?.id ? `/admin?tab=${item.category?.id}` : "/admin"
+    const navigationBackLink = item.category?.id ? `/admin` : "/admin"
 
     return (
 
@@ -316,23 +306,20 @@ function MenuItemList({ items, action }: MenuItemListProps) {
     if (action === "menu-item-edit" || action === "menu-item-create") return null
 
     return (
-        <div className="flex flex-col gap-4">
-            <MenuItemListStat items={items} />
-            <ul>
-                {
-                    (!items || items.length === 0) ?
-                        <NoRecordsFound text="Nenhum itens no menu" />
-                        :
-                        items.map(item => {
-                            return (
-                                <li key={item.id} className="mb-4">
-                                    <MenuItemCard item={item} />
-                                </li>
-                            )
-                        })
-                }
-            </ul>
-        </div>
+        <ul className="md:grid md:grid-cols-3 gap-4">
+            {
+                (!items || items.length === 0) ?
+                    <NoRecordsFound text="Nenhum itens no menu" />
+                    :
+                    items.map(item => {
+                        return (
+                            <li key={item.id} className="mb-4">
+                                <MenuItemCard item={item} />
+                            </li>
+                        )
+                    })
+            }
+        </ul>
     )
 }
 
@@ -352,9 +339,6 @@ function MenuItemListStat({ items }: { items: MenuItem[] }) {
         </div>
     )
 }
-
-
-
 
 
 
@@ -392,16 +376,23 @@ function MenuItemCard({ item }: MenuItemCardProps) {
                             <span className="underline">Editar</span>
                         </Link>
                     </div>
-                    <h3 className="flex gap-2">
-                        <span className="text-sm font-semibold text-muted-foreground">Cátegoria:</span>
-                        <span className="text-sm">{pizzaCategory?.name}</span>
-                    </h3>
+                    <Badge className="w-max">{pizzaCategory?.name}</Badge>
                     <div className="flex justify-between w-full">
                         <span className="font-semibold text-sm">Pública no cardápio</span>
                         <Switch id="visible" name="visible" defaultChecked={item.visible} disabled />
                     </div>
                 </div>
                 <div>
+                    {
+                        item?.ingredients && (item?.ingredients.map(
+                            (i, index) => <Badge key={index} className="w-max">{i}</Badge>
+                        ))
+
+                    }
+                </div>
+
+                <div>
+
                     <span className="text-xs underline" onClick={() => setShowDetails(!showDetails)}>Detalhes</span>
                     {
                         showDetails && (
